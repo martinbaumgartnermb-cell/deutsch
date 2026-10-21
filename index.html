@@ -169,6 +169,21 @@
     .wort.falsch  { background: #ffe5e7; color: #c1121f; text-decoration: line-through; box-shadow: none; }
     .wort.stimmt::after { content: " ✓"; font-size: 22px; }
 
+    /* Text anmalen: Farbe wählen und mit dem Stift über die Wörter streichen */
+    .stifte { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-bottom: 12px; }
+    .farbstift {
+      font-size: 20px; font-weight: bold; border: 4px solid transparent; border-radius: 18px; padding: 10px 16px;
+      color: #222; box-shadow: 0 4px 0 rgba(0,0,0,.15);
+    }
+    .farbstift.aktiv { border-color: #333; transform: scale(1.08); }
+    .farbstift.radierer { background: white; }
+    #maltext {
+      font-size: 28px; line-height: 2.1; text-align: left; touch-action: none; padding: 4px 6px;
+    }
+    .mw { border-radius: 8px; padding: 2px 3px; transition: background .15s; }
+    .mw.fehler { outline: 3px dashed #e63946; outline-offset: 1px; }
+    .mw.ok-farbe { outline: none; }
+
     /* Antwort-Knöpfe */
     .optionen { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 10px; }
     .opt {
@@ -514,6 +529,23 @@
       "Ich bin schlau, rot und flink. Ich habe einen buschigen Schwanz.|Fuchs"
     ];
 
+    // Kurze Texte zum Anmalen: /N = Nomen (braun), /V = Verb (blau), /A = Adjektiv (gelb).
+    // Wörter ohne Zeichen bleiben weiss.
+    const TEXTE = [
+      "Am Morgen/N scheint/V die warme/A Sonne/N. Rémi/N packt/V seine schwere/A Schultasche/N. Er läuft/V schnell/A zur Schule/N.",
+      "Im Garten/N wohnt/V ein kleiner/A Igel/N. Er sucht/V am Abend/N fette/A Käfer/N. Seine Stacheln/N sind/V spitz/A.",
+      "Die Klasse/N macht/V einen langen/A Ausflug/N. Die Kinder/N wandern/V auf einen hohen/A Berg/N. Oben essen/V sie ein feines/A Picknick/N.",
+      "Im Winter/N fällt/V weisser/A Schnee/N. Die Kinder/N bauen/V einen grossen/A Schneemann/N. Seine Nase/N ist/V ein langes/A Rüebli/N.",
+      "Der freche/A Kater/N schleicht/V durch die Küche/N. Er springt/V auf den Tisch/N. Dort steht/V ein voller/A Teller/N mit Wurst/N.",
+      "Lisa/N hat/V Geburtstag/N. Sie bekommt/V ein neues/A Velo/N. Das Velo/N ist/V rot/A und glänzt/V hell/A in der Sonne/N.",
+      "Im Herbst/N werden/V die Blätter/N bunt/A. Der Wind/N bläst/V kräftig/A. Die Kinder/N sammeln/V Kastanien/N im Wald/N.",
+      "Der Bauer/N füttert/V die hungrigen/A Kühe/N. Im Stall/N ist/V es warm/A. Das kleine/A Kalb/N trinkt/V frische/A Milch/N.",
+      "Papa/N kocht/V eine heisse/A Suppe/N. Mama/N schneidet/V das frische/A Brot/N. Alle essen/V zusammen am grossen/A Tisch/N.",
+      "Nora/N malt/V ein buntes/A Bild/N. Sie braucht/V gelbe/A und blaue/A Farbe/N. Das fertige/A Bild/N hängt/V an der Wand/N.",
+      "Der Hund/N Bello/N bellt/V laut/A. Er rennt/V über die grüne/A Wiese/N. Dann trinkt/V er kaltes/A Wasser/N aus dem Bach/N.",
+      "In der Nacht/N ist/V es dunkel/A. Die Eule/N sitzt/V auf einem alten/A Baum/N. Sie sieht/V eine kleine/A Maus/N."
+    ];
+
     // Welches Adjektiv passt?
     const PASST = {
       "eine Strasse":  ["schmal", "steinig", "steil", "breit", "kurvig"],
@@ -585,7 +617,14 @@
         tipp: "schnell – schnell<b>er</b> – am schnell<b>sten</b><br>Manchmal wird a zu ä, o zu ö, u zu ü: alt – <b>ä</b>lter – am <b>ä</b>ltesten<br>" +
               "Ganz besonders: gut – besser – am besten · viel – mehr – am meisten · hoch – höher – am höchsten" },
       { id: "raetsel",   tier: "🦉", name: "Rätsel: Was bin ich?", farbe: "#d63384", schreibbar: true,
-        tipp: "Die Adjektive verraten dir, wie das Ding ist. Lies sie genau!<br>Die Lösung ist ein Nomen – Nomen schreibt man gross." }
+        tipp: "Die Adjektive verraten dir, wie das Ding ist. Lies sie genau!<br>Die Lösung ist ein Nomen – Nomen schreibt man gross." },
+      { id: "text",      tier: "🖍️", name: "Text anmalen", farbe: "#8d5a2b",
+        tipp: "Wähle oben eine Farbe und streiche die Wörter mit dem Stift an:<br>" +
+              "🟤 <b>Nomen braun</b> · 🔵 <b>Verben blau</b> · 🟡 <b>Adjektive gelb</b>. Alle anderen Wörter bleiben weiss.<br>" +
+              "Falsch angemalt? Nimm den 🧽 Radierer oder male mit der richtigen Farbe darüber.<br>" +
+              PROBE.N + "<br>" + PROBE.V + "<br>" + PROBE.A },
+      { id: "werkstatt", tier: "✏️", name: "Schreib-Werkstatt", farbe: "#1d3557",
+        tipp: "Hier schreibst du jede Antwort selbst mit dem Stift. Schreib schön deutlich, dann kann ich es lesen!" }
     ];
     function fallVon(id) { return FAELLE.filter(function (f) { return f.id === id; })[0]; }
 
@@ -736,7 +775,19 @@
       });
     });
 
+    // 8) Texte anmalen
+    TEXTE.forEach(function (text, ti) {
+      const woerter = zerlege(text);
+      AUFGABEN.push({ id: "tx-" + ti, fall: "text", frage: function () { return { text: true, woerter: woerter }; } });
+    });
+
+    // Die Schreib-Werkstatt nimmt alle Aufgaben, bei denen man selbst schreiben kann
+    AUFGABEN.forEach(function (a) {
+      a.schreibt = ["verben", "anpassen", "steigern"].indexOf(a.fall) >= 0 || a.id.indexOf("ra-") === 0;
+    });
+
     function aufgabenVon(fallId) {
+      if (fallId === "werkstatt") return AUFGABEN.filter(function (a) { return a.schreibt; });
       return AUFGABEN.filter(function (a) { return !fallId || a.fall === fallId; });
     }
 
@@ -866,7 +917,7 @@
     // Knöpfe "Antippen / Schreiben" – nur wo Schreiben möglich ist
     function artenZeigen() {
       const arten = document.getElementById("arten");
-      const geht = fallId === null || fallVon(fallId).schreibbar;
+      const geht = fallId === null || (fallId !== "werkstatt" && fallVon(fallId).schreibbar);
       arten.innerHTML = "";
       arten.hidden = !geht;
       if (!geht) return;
@@ -906,9 +957,10 @@
       bisStickerZeigen();
 
       if (f.detektiv) { zeigeDetektiv(f); return; }
+      if (f.text) { zeigeText(f); return; }
 
       document.getElementById("aufgabe").innerHTML = f.html;
-      const schreibenAn = einst.schreiben && f.schreib && fall.schreibbar;
+      const schreibenAn = (fallId === "werkstatt" || einst.schreiben) && f.schreib && fall.schreibbar;
       if (schreibenAn) {
         document.getElementById("schreiben").hidden = false;
         document.getElementById("schreibKnoepfe").hidden = false;
@@ -998,6 +1050,133 @@
         bewerten(ok);
       };
       document.getElementById("optionen").appendChild(pruefen);
+    }
+
+    // ---------- Text anmalen ----------
+    // Farbe wählen, dann mit dem Stift (oder Finger) über die Wörter streichen.
+    let malFarbe = "N";
+    function zeigeText(f) {
+      const farben = f.woerter.map(function () { return ""; });   // was er angemalt hat
+      let hatteFehler = false;
+      const box = document.getElementById("aufgabe");
+      box.innerHTML =
+        '<div class="a-frage">Male alle Wörter in der richtigen Farbe an!</div>' +
+        '<div class="stifte" id="stifte"></div><div id="maltext"></div>';
+
+      // Farbstifte
+      const stifte = document.getElementById("stifte");
+      ["N", "V", "A", ""].forEach(function (t) {
+        const k = document.createElement("button");
+        k.className = "farbstift" + (t ? "" : " radierer") + (t === malFarbe ? " aktiv" : "");
+        if (t) k.style.background = WORTART[t].farbe;
+        k.textContent = t ? MEHRZAHL[t] : "🧽 Radierer";
+        k.onclick = function () {
+          malFarbe = t;
+          stifte.querySelectorAll(".farbstift").forEach(function (b) { b.classList.remove("aktiv"); });
+          k.classList.add("aktiv");
+        };
+        stifte.appendChild(k);
+      });
+
+      // Der Text: jedes Wort ist einzeln anmalbar
+      const malText = document.getElementById("maltext");
+      f.woerter.forEach(function (x, i) {
+        const s = document.createElement("span");
+        s.className = "mw";
+        s.dataset.i = i;
+        s.textContent = x.w;
+        malText.appendChild(s);
+        malText.appendChild(document.createTextNode(x.p + " "));
+      });
+      function anmalen(i) {
+        if (beantwortet || farben[i] === malFarbe) return;
+        farben[i] = malFarbe;
+        const s = malText.children[i];
+        s.style.background = malFarbe ? WORTART[malFarbe].farbe : "";
+        s.classList.remove("fehler");
+      }
+      function wortBei(ev) {
+        const el = document.elementFromPoint(ev.clientX, ev.clientY);
+        return el && el.classList && el.classList.contains("mw") ? Number(el.dataset.i) : -1;
+      }
+      let malt = false;
+      malText.addEventListener("pointerdown", function (ev) {
+        if (ev.pointerType === "pen") stiftBenutzt = true;
+        if (ev.pointerType === "touch" && stiftBenutzt) return;   // Hand auf dem Bildschirm ignorieren
+        ev.preventDefault();
+        malt = true;
+        const i = wortBei(ev);
+        // Tippt er auf ein Wort, das schon diese Farbe hat, wird es wieder weiss
+        if (i >= 0 && malFarbe && farben[i] === malFarbe) {
+          farben[i] = ""; malText.children[i].style.background = ""; malt = false; return;
+        }
+        if (i >= 0) anmalen(i);
+      });
+      malText.addEventListener("pointermove", function (ev) {
+        if (!malt) return;
+        ev.preventDefault();
+        const ereignisse = ev.getCoalescedEvents ? ev.getCoalescedEvents() : [];
+        (ereignisse.length ? ereignisse : [ev]).forEach(function (e) {
+          const i = wortBei(e);
+          if (i >= 0) anmalen(i);
+        });
+      });
+      ["pointerup", "pointercancel", "pointerleave"].forEach(function (n) {
+        malText.addEventListener(n, function () { malt = false; });
+      });
+
+      // Prüfen: Stimmt jede Farbe?
+      const optionen = document.getElementById("optionen");
+      const pruefen = document.createElement("button");
+      pruefen.className = "knopf gruen";
+      pruefen.textContent = "Prüfen 🔍";
+      pruefen.style.gridColumn = "1 / -1";
+      pruefen.onclick = function () {
+        if (beantwortet) return;
+        let fehler = 0;
+        f.woerter.forEach(function (x, i) {
+          const s = malText.children[i];
+          const falsch = farben[i] !== x.t;
+          s.classList.toggle("fehler", falsch);
+          if (falsch) fehler++;
+        });
+        if (!fehler) {
+          if (hatteFehler) aktuelle.nochmal = true;   // zählt nicht als "sofort gewusst"
+          f.loesung = "";
+          bewerten(true);
+          return;
+        }
+        if (!hatteFehler) {                            // der erste Fehler wird im Lernstand vermerkt
+          hatteFehler = true;
+          const a = info(aktuelle.aufgabe.id);
+          a.nicht++; a.serie = 0; a.zeit = Date.now();
+          speichern();
+        }
+        document.getElementById("rueckmeldung").innerHTML =
+          '<div class="rueck falsch"><div class="gross">' +
+          (fehler === 1 ? "1 Wort stimmt noch nicht" : fehler + " Wörter stimmen noch nicht") + ' 🔎</div>' +
+          '<div class="info">Sie sind rot umrandet. Schau sie nochmals an und korrigiere sie!</div></div>';
+      };
+      const zeigen = document.createElement("button");
+      zeigen.className = "knopf";
+      zeigen.textContent = "👀 Lösung zeigen";
+      zeigen.style.gridColumn = "1 / -1";
+      zeigen.onclick = function () {
+        if (beantwortet) return;
+        f.woerter.forEach(function (x, i) {
+          farben[i] = x.t;
+          const s = malText.children[i];
+          s.style.background = x.t ? WORTART[x.t].farbe : "";
+          s.classList.remove("fehler");
+        });
+        pruefen.remove(); zeigen.remove();
+        if (hatteFehler) { const a = info(aktuelle.aufgabe.id); a.nicht = Math.max(0, a.nicht - 1); }  // nicht doppelt zählen
+        f.loesung = "";
+        f.erklaerung = "So ist es richtig. Der Text kommt später nochmals! 💪";
+        bewerten(false, "Schau gut hin 👀");
+      };
+      optionen.appendChild(pruefen);
+      optionen.appendChild(zeigen);
     }
 
     // ---------- Richtig oder falsch? ----------
