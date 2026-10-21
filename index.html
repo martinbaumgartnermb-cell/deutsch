@@ -1,0 +1,1502 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <!-- Damit die App auf dem iPad-Homebildschirm wie eine echte App startet -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Detektiv">
+  <title>Wortarten-Detektiv</title>
+
+  <!-- ================= AUSSEHEN (CSS) ================= -->
+  <!-- Gleiches Design wie die Einmaleins-, Englisch- und Reihen-App -->
+  <style>
+    * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+
+    body {
+      margin: 0;
+      font-family: "Trebuchet MS", Arial, sans-serif;
+      background: linear-gradient(#fff3d6, #ffe0f0);
+      min-height: 100vh;
+      color: #333;
+      text-align: center;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    button {
+      font-family: inherit;
+      cursor: pointer;
+      touch-action: manipulation;   /* verhindert Zoomen beim schnellen Tippen */
+    }
+
+    /* Kopfzeile mit Titel und Sammelalbum */
+    .kopf {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 16px;
+      max-width: 820px;
+      margin: 0 auto;
+    }
+    h1 { margin: 0; font-size: 26px; color: #e85d04; }
+
+    /* ---------- Startseite ---------- */
+    #start { padding: 0 16px 30px; }
+    .frage { font-size: 22px; margin: 4px 0 16px; }
+
+    /* Begrüssung mit Foto */
+    .begruessung { margin: 4px 0 10px; }
+    .foto {
+      display: inline-block;
+      width: 130px;
+      height: 130px;
+      border-radius: 50%;
+      border: 6px solid white;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.18);
+      background: #ffd166;
+      overflow: hidden;
+      cursor: pointer;
+      animation: reinhuepfen 0.8s ease-out;
+    }
+    .foto img { width: 100%; height: 100%; object-fit: cover; display: none; }
+    .foto span { display: block; padding-top: 30px; font-size: 18px; color: #7a5200; line-height: 1.3; }
+    .begruessung h2 { font-size: 36px; margin: 10px 0 0; color: #e85d04; }
+    .winken { display: inline-block; animation: winken 1.2s ease-in-out 2; transform-origin: 70% 70%; }
+
+    @keyframes reinhuepfen {
+      0%   { transform: scale(0.3); opacity: 0; }
+      70%  { transform: scale(1.1); opacity: 1; }
+      100% { transform: scale(1); }
+    }
+    @keyframes winken {
+      0%, 100% { transform: rotate(0deg); }
+      25%      { transform: rotate(20deg); }
+      75%      { transform: rotate(-10deg); }
+    }
+
+    .raster {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+      gap: 14px;
+      max-width: 820px;
+      margin: 0 auto;
+    }
+    .karte {
+      border: none;
+      border-radius: 22px;
+      padding: 14px 10px 12px;
+      color: white;
+      box-shadow: 0 5px 0 rgba(0,0,0,0.18);
+    }
+    .karte:active { transform: translateY(4px); box-shadow: 0 1px 0 rgba(0,0,0,0.18); }
+    .karte .tier  { font-size: 42px; display: block; }
+    .karte .name  { font-size: 21px; font-weight: bold; display: block; margin: 2px 0 8px; line-height: 1.2; }
+    .karte .stand { font-size: 15px; display: block; margin-top: 6px; }
+    .gemischt { grid-column: 1 / -1; }
+
+    .balken {
+      background: rgba(255,255,255,0.35);
+      height: 10px;
+      border-radius: 5px;
+      overflow: hidden;
+    }
+    .balken div { background: white; height: 100%; }
+
+    /* Die Farben der Wortarten */
+    .farben { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin: 18px 0 0; font-size: 16px; }
+    .farben span { padding: 5px 12px; border-radius: 12px; font-weight: bold; }
+
+    .zuruecksetzen {
+      margin-top: 30px;
+      background: none;
+      border: none;
+      color: #999;
+      font-size: 14px;
+      text-decoration: underline;
+    }
+
+    /* ---------- Spielseite ---------- */
+    #spiel { display: none; padding: 0 16px 30px; max-width: 680px; margin: 0 auto; }
+
+    .oben { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+    .zurueck, .tipp-knopf {
+      background: white;
+      border: none;
+      border-radius: 14px;
+      font-size: 18px;
+      padding: 8px 14px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+    }
+    #zaehler { font-size: 17px; color: #777; }
+
+    #titel { font-size: 30px; font-weight: bold; margin: 2px 0 8px; }
+
+    /* Auswahl: Antippen / Schreiben */
+    .arten { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-bottom: 12px; }
+    .art {
+      border: none; border-radius: 16px; background: white; color: #555; font-size: 16px; font-weight: bold;
+      padding: 8px 14px; box-shadow: 0 3px 0 #ddd;
+    }
+    .art.aktiv { background: #e85d04; color: white; box-shadow: 0 3px 0 #b44700; }
+
+    #tipp {
+      background: #fff8dc; border: 3px dashed #ffd166; border-radius: 18px; padding: 10px 14px;
+      font-size: 18px; line-height: 1.45; margin-bottom: 12px; text-align: left;
+    }
+
+    /* Die Aufgabe */
+    #aufgabe {
+      background: white; border-radius: 22px; box-shadow: 0 4px 14px rgba(0,0,0,.08);
+      padding: 18px 14px; margin-bottom: 14px; min-height: 150px;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+    }
+    .a-frage  { font-size: 20px; color: #666; }
+    .a-gross  { font-size: 36px; font-weight: bold; line-height: 1.35; }
+    .a-klein  { font-size: 22px; color: #777; }
+    .luecke   { display: inline-block; min-width: 110px; border-bottom: 4px solid #e85d04; margin: 0 6px; }
+    .markiert { background: #ffe8cc; border-radius: 10px; padding: 0 8px; box-shadow: 0 0 0 3px #f4a261 inset; }
+
+    /* Wörter zum Antippen (Detektiv) */
+    .satz { font-size: 32px; line-height: 1.9; }
+    .wort {
+      font-size: 32px; font-family: inherit; border: none; background: #f6f6f6; color: #333;
+      border-radius: 12px; padding: 2px 10px; margin: 3px 2px; box-shadow: 0 3px 0 #e2e2e2;
+    }
+    .wort.an { color: #222; }
+    .wort.fehlt   { background: white; box-shadow: 0 0 0 4px currentColor inset; }
+    .wort.falsch  { background: #ffe5e7; color: #c1121f; text-decoration: line-through; box-shadow: none; }
+    .wort.stimmt::after { content: " ✓"; font-size: 22px; }
+
+    /* Antwort-Knöpfe */
+    .optionen { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 10px; }
+    .opt {
+      font-size: 28px; font-weight: bold; border: none; border-radius: 18px; padding: 16px 10px;
+      background: white; color: #333; box-shadow: 0 5px 0 #ddd;
+    }
+    .opt:active { transform: translateY(4px); box-shadow: 0 1px 0 #ddd; }
+    .opt.richtig { background: #06d6a0; color: white; box-shadow: 0 5px 0 #04a57b; }
+    .opt.falsch  { background: #ffd6d6; color: #c1121f; box-shadow: 0 5px 0 #f0b0b0; }
+    .opt.wortart { color: #222; }
+
+    /* Schreiben mit dem Stift */
+    .schreibflaeche {
+      position: relative; width: 100%; height: 30vh; min-height: 220px; max-height: 320px;
+      background: white; border-radius: 22px; border: 4px solid #ffd166; overflow: hidden;
+      touch-action: none;
+    }
+    .schreibflaeche canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; }
+    .linien { position: absolute; left: 20px; right: 20px; pointer-events: none; }
+    .linien.mitte { top: 42%; border-top: 3px dashed #f0dca8; }
+    .linien.grund { top: 66%; border-top: 3px solid #e8c77a; }
+    .leer-hinweis { position: absolute; top: 12px; left: 0; right: 0; color: #ccc; font-size: 20px; pointer-events: none; }
+
+    .knopfreihe { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin: 14px 0; }
+    .knopf {
+      font-size: 22px; font-weight: bold; border: none; border-radius: 18px; padding: 13px 24px;
+      background: white; box-shadow: 0 5px 0 #ddd; color: #333;
+    }
+    .knopf:active { transform: translateY(4px); box-shadow: 0 1px 0 #ddd; }
+    .knopf.gruen { background: #06d6a0; color: white; box-shadow: 0 5px 0 #04a57b; }
+    .knopf.rot   { background: #ffd6d6; box-shadow: 0 5px 0 #f0b0b0; }
+    .hinweis { font-size: 19px; color: #555; min-height: 26px; margin: 6px 0; }
+
+    /* Rückmeldung */
+    .rueck { border-radius: 20px; padding: 14px; margin: 6px 0 4px; border: 4px solid; }
+    .rueck.richtig { background: #e3fff5; border-color: #06d6a0; }
+    .rueck.falsch  { background: #ffe5e7; border-color: #e63946; }
+    .rueck .gross   { font-size: 28px; font-weight: bold; }
+    .rueck .loesung { font-size: 34px; font-weight: bold; margin: 6px 0; }
+    .rueck .info    { font-size: 19px; color: #555; line-height: 1.4; }
+    .doch { background: none; border: none; color: #999; text-decoration: underline; font-size: 15px; margin-top: 8px; }
+
+    #bisSticker { font-size: 15px; color: #777; margin: 10px 0 4px; }
+
+    /* Ergebnis nach einer Runde */
+    #ergebnis { display: none; background: white; border-radius: 22px; padding: 18px 16px 20px;
+                box-shadow: 0 4px 14px rgba(0,0,0,.1); margin: 6px auto; max-width: 460px; }
+    #ergebnis .e-bild  { font-size: 64px; line-height: 1.1; }
+    #ergebnis .e-titel { font-size: 28px; font-weight: bold; color: #e85d04; margin: 4px 0; }
+    #ergebnis .e-text  { font-size: 19px; color: #555; margin-bottom: 16px; line-height: 1.4; }
+    .gross-knopf { font-size: 22px; font-weight: bold; border: none; border-radius: 18px; padding: 13px 26px; margin: 4px;
+                   background: #06d6a0; color: white; box-shadow: 0 5px 0 #04a57b; }
+    .gross-knopf:active { transform: translateY(4px); box-shadow: 0 1px 0 #04a57b; }
+    .gross-knopf.weiss { background: #f1f1f1; color: #555; box-shadow: 0 5px 0 #d6d6d6; }
+
+    /* ---------- Sammelalbum (gleich wie in den anderen Apps) ---------- */
+    .album-knopf {
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+      background: white; border: none; border-radius: 20px; padding: 6px 14px 7px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.12); color: #333;
+    }
+    .album-knopf:active { transform: translateY(2px); }
+    .album-knopf.landet { animation: landen .5s ease-out; }
+    @keyframes landen { 0% { transform: scale(1); } 40% { transform: scale(1.25); } 100% { transform: scale(1); } }
+    .album-zahl { font-size: 22px; font-weight: bold; line-height: 1; }
+    .album-punkte { display: flex; gap: 3px; }
+    .album-punkte i { width: 7px; height: 7px; border-radius: 50%; background: #eee; display: block; transition: background .3s; }
+    .album-punkte i.voll { background: #ffb703; }
+
+    .serie { display: inline-block; font-size: 18px; font-weight: bold; color: #c44900; background: #fff1e0;
+             border-radius: 16px; padding: 4px 14px; margin-top: 8px; }
+
+    /* Der neue Sticker poppt auf und fliegt dann ins Album oben rechts */
+    #stickerPlus {
+      position: fixed; top: 42%; left: 50%; z-index: 50; pointer-events: none; display: none;
+      background: white; border-radius: 28px; padding: 18px 30px 16px; min-width: 230px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.22); border: 5px solid #ffd166;
+    }
+    #stickerPlus.gold { border-color: #f5b700; background: linear-gradient(#fffbe6, #fff1b8); }
+    #stickerPlus .s-titel { font-size: 22px; font-weight: bold; color: #e85d04; }
+    #stickerPlus .s-bild { font-size: 110px; line-height: 1.15; }
+    #stickerPlus.gold .s-bild { filter: drop-shadow(0 0 14px #ffd000); }
+    #stickerPlus .s-name { font-size: 26px; font-weight: bold; }
+    #stickerPlus .s-info { font-size: 16px; color: #777; margin-top: 2px; }
+    #stickerPlus.zeigen { display: block; animation: stickerFlug 2.4s ease-in-out forwards; }
+    @keyframes stickerFlug {
+      0%   { transform: translate(-50%, -50%) scale(.2) rotate(-12deg); opacity: 0; }
+      14%  { transform: translate(-50%, -50%) scale(1.12) rotate(4deg); opacity: 1; }
+      22%  { transform: translate(-50%, -50%) scale(1) rotate(0); }
+      72%  { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+      100% { transform: translate(calc(-50% + 36vw), calc(-50% - 38vh)) scale(.12); opacity: .2; }
+    }
+
+    /* Album-Ansicht */
+    #album { border: none; border-radius: 22px; padding: 18px; width: 94%; max-width: 640px; max-height: 88vh; text-align: center; }
+    #album::backdrop { background: rgba(0,0,0,.35); }
+    #album h3 { margin: 0 0 4px; color: #e85d04; font-size: 26px; }
+    #album .a-stand { font-size: 17px; color: #666; margin-bottom: 8px; }
+    #album .a-seite { font-size: 18px; font-weight: bold; text-align: left; margin: 14px 0 6px; }
+    #album .a-raster { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+    #album .a-sticker { background: #f6f6f6; border-radius: 14px; padding: 6px 2px; font-size: 13px; color: #555; }
+    #album .a-sticker b { display: block; font-size: 38px; line-height: 1.2; font-weight: normal; }
+    #album .a-sticker.hat { background: #fff6d6; color: #333; }
+    #album .a-sticker.gold { background: linear-gradient(#fff6c2, #ffe27a); box-shadow: 0 0 0 3px #f5b700 inset; }
+    #album .a-sticker.fehlt b { filter: grayscale(1) brightness(1.6); opacity: .25; }
+    #album .a-zu { margin-top: 16px; font-size: 22px; font-weight: bold; border: none; border-radius: 18px; padding: 12px 34px;
+                   background: #06d6a0; color: white; box-shadow: 0 5px 0 #04a57b; font-family: inherit; }
+  </style>
+</head>
+<body>
+
+  <!-- ================= INHALT (HTML) ================= -->
+
+  <div class="kopf">
+    <h1>🔍 Wortarten-Detektiv</h1>
+    <button class="album-knopf" id="albumKnopf" aria-label="Sammelalbum">
+      <span class="album-zahl">📒 <span id="albumZahl">0</span></span>
+      <span class="album-punkte" id="albumPunkte"></span>
+    </button>
+  </div>
+
+  <!-- Startseite -->
+  <div id="start">
+    <div class="begruessung">
+      <!-- Tippt man auf den Kreis, kann man ein Foto auswählen -->
+      <label class="foto">
+        <img id="foto" alt="Foto">
+        <span id="fotoHinweis">📷<br>Foto<br>wählen</span>
+        <input type="file" id="fotoWahl" accept="image/*" style="display:none">
+      </label>
+      <h2>Hallo <span id="name"></span>! <span class="winken">👋</span></h2>
+      <div class="serie" id="serie" hidden></div>
+    </div>
+    <p class="frage">Welchen Fall willst du heute lösen, Detektiv?</p>
+    <div class="raster" id="karten"></div>
+    <div class="farben" id="farben"></div>
+    <button class="zuruecksetzen" id="zuruecksetzen">Fortschritt zurücksetzen</button>
+    <div id="cloudStatus" style="font-size:13px; color:#999; margin-top:8px;"></div>
+  </div>
+
+  <!-- Spielseite -->
+  <div id="spiel">
+    <div class="oben">
+      <button class="zurueck" id="zurueck">← Fälle</button>
+      <span id="zaehler"></span>
+      <button class="tipp-knopf" id="tippKnopf">💡 Tipp</button>
+    </div>
+
+    <div id="titel"></div>
+    <div class="arten" id="arten"></div>
+    <div id="tipp" hidden></div>
+
+    <div id="aufgabeBereich">
+      <div id="aufgabe"></div>
+      <div class="optionen" id="optionen"></div>
+
+      <!-- Schreiben mit dem Apple Pencil -->
+      <div id="schreiben" hidden>
+        <div class="schreibflaeche" id="schreibflaeche">
+          <div class="leer-hinweis" id="leerHinweis">✏️ Hier mit dem Stift schreiben</div>
+          <div class="linien mitte"></div>
+          <div class="linien grund"></div>
+          <canvas id="leinwand"></canvas>
+        </div>
+        <div class="knopfreihe" id="schreibKnoepfe">
+          <button class="knopf" id="rueckgaengig">↩️ Zurück</button>
+          <button class="knopf rot" id="loeschen">🗑️ Löschen</button>
+          <button class="knopf gruen" id="schreibFertig">Fertig ✓</button>
+        </div>
+        <div class="hinweis" id="schreibHinweis"></div>
+      </div>
+
+      <div id="rueckmeldung"></div>
+      <div class="knopfreihe" id="nachher" hidden>
+        <button class="knopf gruen" id="weiter">Weiter ➜</button>
+      </div>
+      <div id="bisSticker"></div>
+    </div>
+
+    <div id="ergebnis"></div>
+  </div>
+
+  <div id="stickerPlus"></div>
+  <dialog id="album"></dialog>
+
+
+  <!-- ================= VERHALTEN (JavaScript) ================= -->
+  <script>
+    // ---------- Einstellungen ----------
+    const GEKONNT_AB = 2;             // so oft hintereinander gewusst = "kann ich"
+    const AUFGABEN_PRO_RUNDE = 10;    // so viele Aufgaben hat eine Runde
+    const SPEICHER_NAME = "deutsch-detektiv-daten";
+    const EINST_NAME = "deutsch-detektiv-einstellungen";
+    const LOB = ["🎉 Super!", "⭐ Richtig!", "👏 Toll gemacht!", "💪 Stark!", "🔍 Gut ermittelt!", "🚀 Genau!"];
+
+    // Die Farben der Wortarten (Adjektive gelb wie im Schulheft).
+    // Malt Rémis Klasse Nomen oder Verben mit einer anderen Farbe an, hier einfach ändern.
+    const WORTART = {
+      N: { name: "Nomen",    farbe: "#7cc6fe", punkt: "🔵" },
+      V: { name: "Verb",     farbe: "#ff8fa3", punkt: "🔴" },
+      A: { name: "Adjektiv", farbe: "#ffe066", punkt: "🟡" }
+    };
+    const MEHRZAHL = { N: "Nomen", V: "Verben", A: "Adjektive" };
+
+    // So erkennt man die Wortarten (wird bei Fehlern und unter 💡 Tipp gezeigt)
+    const PROBE = {
+      N: "Nomen: Man kann <b>der, die</b> oder <b>das</b> davorsetzen. Nomen schreibt man gross: der Hund, die Sonne.",
+      V: "Verb: Man kann <b>ich, du, er</b> davorsetzen. Verben sagen, was jemand tut: ich renne, du rennst.",
+      A: "Adjektiv: Es sagt, <b>wie</b> etwas ist oder wie man etwas macht. Man kann es steigern: schnell – schneller – am schnellsten."
+    };
+
+
+    // ================= DIE ÜBUNGEN (Inhalte) =================
+    // Hier können jederzeit neue Sätze und Wörter ergänzt werden.
+
+    // Sätze für den Detektiv: /N = Nomen, /V = Verb, /A = Adjektiv. Wörter ohne Zeichen sind "andere Wörter".
+    const SAETZE = [
+      "Der Hund/N bellt/V laut/A.",
+      "Die Katze/N schläft/V auf dem warmen/A Sofa/N.",
+      "Rémi/N spielt/V mit seinem roten/A Ball/N.",
+      "Die Sonne/N scheint/V hell/A.",
+      "Im Winter/N ist/V es kalt/A.",
+      "Mein Bruder/N rennt/V schnell/A über die Strasse/N.",
+      "Die Suppe/N ist/V heiss/A.",
+      "Der freche/A Kater/N klettert/V auf den hohen/A Baum/N.",
+      "Wir backen/V einen feinen/A Kuchen/N.",
+      "Das kleine/A Eichhörnchen/N sammelt/V Nüsse/N.",
+      "Lisa/N erzählt/V einen lustigen/A Witz/N.",
+      "Der Lehrer/N liest/V eine spannende/A Geschichte/N.",
+      "Die Kinder/N singen/V ein schönes/A Lied/N.",
+      "Das Wasser/N im See/N ist/V kalt/A.",
+      "Papa/N kocht/V heute eine scharfe/A Suppe/N.",
+      "Die nassen/A Schuhe/N stehen/V vor der Tür/N.",
+      "Der Igel/N läuft/V langsam/A durch den Garten/N.",
+      "Meine Schwester/N trinkt/V warmen/A Tee/N.",
+      "Der rote/A Bus/N hält/V an der Ecke/N.",
+      "Die Kuh/N frisst/V frisches/A Gras/N.",
+      "Im Herbst/N fallen/V die bunten/A Blätter/N.",
+      "Der Vogel/N singt/V fröhlich/A im Baum/N.",
+      "Die Farbstifte/N sind/V stumpf/A.",
+      "Mama/N schneidet/V das frische/A Brot/N.",
+      "Der Fuchs/N ist/V schlau/A.",
+      "Das Pferd/N galoppiert/V schnell/A über die grüne/A Wiese/N.",
+      "Ich male/V ein buntes/A Bild/N.",
+      "Die alte/A Brücke/N ist/V schmal/A.",
+      "Der Schnee/N glitzert/V in der Sonne/N.",
+      "Wir spielen/V auf dem Pausenplatz/N.",
+      "Der Wind/N ist/V stark/A und kalt/A.",
+      "Die Maus/N ist/V kleiner/A als die Katze/N.",
+      "Nora/N schwimmt/V schneller/A als ihr Bruder/N.",
+      "Das Baby/N lacht/V glücklich/A.",
+      "Die Lampe/N leuchtet/V hell/A.",
+      "Der müde/A Bär/N schläft/V in seiner Höhle/N.",
+      "Opa/N erzählt/V eine lustige/A Geschichte/N.",
+      "Die Ente/N schwimmt/V im kalten/A Teich/N.",
+      "Der Zug/N fährt/V durch einen langen/A Tunnel/N.",
+      "Die Blumen/N im Garten/N blühen/V schön/A.",
+      "Der dicke/A Frosch/N hüpft/V in den Teich/N.",
+      "Die Schnecke/N kriecht/V langsam/A über das nasse/A Blatt/N."
+    ];
+
+    // Nomen mit ihrem Begleiter
+    const NOMEN = ("der Hund,die Katze,das Haus,der Schirm,die Suppe,das Sofa,der Ball,die Schule,das Buch,der Apfel," +
+      "die Banane,das Auto,der Baum,die Blume,das Fenster,der Tisch,die Tür,das Bett,der Stuhl,die Lampe," +
+      "das Heft,der Bleistift,die Tasche,das Velo,der Kuchen,die Milch,das Brot,der Mond,die Sonne,das Wasser," +
+      "der Igel,die Maus,das Pferd,der Schnee,die Wolke,das Eichhörnchen,der Kater,die Schnecke,das Kissen,der Löffel," +
+      "die Gabel,das Messer,der Käse,die Brücke,das Lineal").split(",");
+
+    // Verben: ich, du, er/sie, wir, ihr, sie (Mehrzahl)
+    const VERBEN = [
+      "spielen: spiele spielst spielt spielen spielt spielen",
+      "lachen: lache lachst lacht lachen lacht lachen",
+      "malen: male malst malt malen malt malen",
+      "singen: singe singst singt singen singt singen",
+      "rennen: renne rennst rennt rennen rennt rennen",
+      "kochen: koche kochst kocht kochen kocht kochen",
+      "hüpfen: hüpfe hüpfst hüpft hüpfen hüpft hüpfen",
+      "schwimmen: schwimme schwimmst schwimmt schwimmen schwimmt schwimmen",
+      "trinken: trinke trinkst trinkt trinken trinkt trinken",
+      "schreiben: schreibe schreibst schreibt schreiben schreibt schreiben",
+      "tanzen: tanze tanzt tanzt tanzen tanzt tanzen",
+      "rechnen: rechne rechnest rechnet rechnen rechnet rechnen",
+      "arbeiten: arbeite arbeitest arbeitet arbeiten arbeitet arbeiten",
+      "lesen: lese liest liest lesen lest lesen",
+      "essen: esse isst isst essen esst essen",
+      "fahren: fahre fährst fährt fahren fahrt fahren",
+      "laufen: laufe läufst läuft laufen lauft laufen",
+      "schlafen: schlafe schläfst schläft schlafen schlaft schlafen",
+      "sehen: sehe siehst sieht sehen seht sehen",
+      "geben: gebe gibst gibt geben gebt geben",
+      "haben: habe hast hat haben habt haben",
+      "sein: bin bist ist sind seid sind"
+    ];
+    const PERSONEN = ["ich", "du", "Lisa", "wir", "ihr", "die Kinder"];
+
+    // Adjektiv anpassen: Begleiter + Nomen | Adjektiv | angepasste Form
+    const ANPASSEN = [
+      "der Schirm|neu|neue", "das Sofa|bequem|bequeme", "das Kissen|weich|weiche", "die Schuhe|nass|nassen",
+      "die Suppe|scharf|scharfe", "der Hund|klein|kleine", "die Katze|müde|müde", "das Auto|schnell|schnelle",
+      "die Blumen|bunt|bunten", "der Apfel|rot|rote", "die Banane|gelb|gelbe", "das Brot|frisch|frische",
+      "der Turm|hoch|hohe", "die Strasse|breit|breite", "der Weg|steil|steile", "das Kleid|gestreift|gestreifte",
+      "die Kinder|glücklich|glücklichen", "der Mann|nett|nette", "das Wetter|schlecht|schlechte",
+      "der Salat|bitter|bittere", "die Lieder|schön|schönen", "der Kuchen|süss|süsse", "das Heft|dünn|dünne",
+      "der Riese|stark|starke", "die Nacht|dunkel|dunkle", "die Maus|grau|graue", "das Lineal|lang|lange",
+      "die Wolken|grau|grauen", "der Tee|warm|warme", "das Eis|glatt|glatte", "die Hose|kurz|kurze",
+      "der Pullover|warm|warme", "die Bücher|dick|dicken"
+    ];
+
+    // Steigern: Grundform | 1. Steigerung | 2. Steigerung (ohne "am"; Komma = beides richtig)
+    const STEIGERN = [
+      "schnell|schneller|schnellsten", "klein|kleiner|kleinsten", "neu|neuer|neusten,neuesten", "reich|reicher|reichsten",
+      "frech|frecher|frechsten", "hell|heller|hellsten", "dünn|dünner|dünnsten", "weich|weicher|weichsten",
+      "schlau|schlauer|schlausten,schlauesten", "sauber|sauberer|saubersten", "dick|dicker|dicksten", "schön|schöner|schönsten",
+      "alt|älter|ältesten", "kalt|kälter|kältesten", "arm|ärmer|ärmsten", "dumm|dümmer|dümmsten", "jung|jünger|jüngsten",
+      "gross|grösser|grössten", "stark|stärker|stärksten", "warm|wärmer|wärmsten", "lang|länger|längsten",
+      "gut|besser|besten", "viel|mehr|meisten", "hoch|höher|höchsten", "nah|näher|nächsten",
+      "leicht|leichter|leichtesten", "schlecht|schlechter|schlechtesten", "heiss|heisser|heissesten",
+      "mild|milder|mildesten", "breit|breiter|breitesten", "frisch|frischer|frischesten", "laut|lauter|lautesten",
+      "lustig|lustiger|lustigsten", "teuer|teurer|teuersten", "dunkel|dunkler|dunkelsten", "schwer|schwerer|schwersten",
+      "klug|klüger|klügsten", "kurz|kürzer|kürzesten"
+    ];
+
+    // Rätsel: Was bin ich?
+    const RAETSEL = [
+      "Ich bin gelb, krumm und süss.|Banane",
+      "Ich bin weiss, kalt und nass.|Schnee",
+      "Ich bin klein, grau und flink. Ich habe einen langen Schwanz.|Maus",
+      "Ich bin rund, heiss und hell. Ich stehe am Himmel.|Sonne",
+      "Ich bin lang, dünn und spitz. Man schreibt mit mir.|Bleistift",
+      "Ich bin weich, bequem und flauschig. Ich liege auf dem Bett.|Kissen",
+      "Ich bin hoch, alt und grün. Vögel wohnen in mir.|Baum",
+      "Ich bin klein, braun und stachelig.|Igel",
+      "Ich bin rot, rund und knackig.|Apfel",
+      "Ich bin langsam und klein. Mein Haus trage ich auf dem Rücken.|Schnecke",
+      "Ich bin gross, grau und stark. Ich habe einen Rüssel.|Elefant",
+      "Ich bin nass, kalt und tief. Fische schwimmen in mir.|See",
+      "Ich bin rund, leicht und bunt. Man kann mit mir spielen.|Ball",
+      "Ich bin flach, dünn und weiss. Man schreibt auf mir.|Papier",
+      "Ich bin warm, weich und kuschelig. Ich decke dich nachts zu.|Decke",
+      "Ich bin schnell, laut und rot. Ich fahre zum Feuer.|Feuerwehrauto",
+      "Ich bin klein, rot und habe schwarze Punkte.|Marienkäfer",
+      "Ich bin hoch, steil und steinig. Oben liegt oft Schnee.|Berg",
+      "Ich bin süss, kalt und cremig. Im Sommer isst man mich gerne.|Glace",
+      "Ich bin schlau, rot und flink. Ich habe einen buschigen Schwanz.|Fuchs"
+    ];
+
+    // Welches Adjektiv passt?
+    const PASST = {
+      "eine Strasse":  ["schmal", "steinig", "steil", "breit", "kurvig"],
+      "Kleider":       ["gestreift", "gepunktet", "kariert", "bequem"],
+      "einen Menschen":["nett", "glücklich", "frech", "traurig", "höflich", "fröhlich"],
+      "das Wetter":    ["sonnig", "bewölkt", "neblig", "regnerisch", "windig", "stürmisch"]
+    };
+
+
+    // ================= HILFSFUNKTIONEN =================
+
+    function mischen(l) {
+      for (let i = l.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        const t = l[i]; l[i] = l[j]; l[j] = t;
+      }
+      return l;
+    }
+    function zufall(l) { return l[Math.floor(Math.random() * l.length)]; }
+    function gross(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+    function esc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;"); }
+
+    // Antwortmöglichkeiten: die richtige plus (anzahl - 1) falsche, gemischt
+    function optionenAus(richtig, kandidaten, anzahl) {
+      const falsche = [];
+      mischen(kandidaten.slice()).forEach(function (k) {
+        if (k !== richtig && falsche.indexOf(k) < 0) falsche.push(k);
+      });
+      return mischen(falsche.slice(0, anzahl - 1).concat([richtig]));
+    }
+
+    // Für falsche Steigerungs-Vorschläge: Umlaut hinzufügen oder wegnehmen
+    function mitUmlaut(w) {
+      const m = w.match(/^(.*)([aou])([^aou]*)$/);
+      if (!m) return w;
+      return m[1] + { a: "ä", o: "ö", u: "ü" }[m[2]] + m[3];
+    }
+    function ohneUmlaut(w) { return w.replace(/ä/g, "a").replace(/ö/g, "o").replace(/ü/g, "u"); }
+
+    // Einen Satz in Wörter zerlegen: [{w: "Hund", t: "N", p: ""}, …]
+    function zerlege(satz) {
+      return satz.split(" ").map(function (teil) {
+        const m = teil.match(/^(.+?)(?:\/([NVA]))?([.,!?]?)$/);
+        return { w: m[1], t: m[2] || "", p: m[3] || "" };
+      });
+    }
+    const SATZ_WOERTER = SAETZE.map(zerlege);
+
+
+    // ================= DIE AUFGABEN =================
+    // Jede Aufgabe hat eine feste id (für den Lernstand) und eine Funktion frage(),
+    // die beim Anzeigen die Antwortmöglichkeiten neu mischt.
+
+    const FAELLE = [
+      { id: "sortieren", tier: "🕵️", name: "Welche Wortart?", farbe: "#277da1",
+        tipp: PROBE.N + "<br>" + PROBE.V + "<br>" + PROBE.A },
+      { id: "detektiv",  tier: "🔍", name: "Wörter-Jagd im Satz", farbe: "#e63946",
+        tipp: "Lies den Satz und tippe <b>alle</b> gesuchten Wörter an. Nochmals tippen nimmt die Farbe wieder weg.<br>" +
+              PROBE.N + "<br>" + PROBE.V + "<br>" + PROBE.A },
+      { id: "artikel",   tier: "🎩", name: "der, die oder das?", farbe: "#43aa8b",
+        tipp: "Nomen haben einen Begleiter: <b>der, die</b> oder <b>das</b>. Sprich es leise vor dich hin: «der Hund» – klingt das richtig?" },
+      { id: "verben",    tier: "🏃", name: "Verben anpassen", farbe: "#f3722c", schreibbar: true,
+        tipp: "Das Verb passt sich an, wer etwas tut:<br>ich spiel<b>e</b> · du spiel<b>st</b> · er spiel<b>t</b> · wir spiel<b>en</b> · ihr spiel<b>t</b> · sie spiel<b>en</b>.<br>" +
+              "Aufpassen: ich lese – du <b>liest</b>, ich fahre – du <b>fährst</b>, ich bin – du <b>bist</b>." },
+      { id: "anpassen",  tier: "🧩", name: "Adjektive anpassen", farbe: "#d68c00", schreibbar: true,
+        tipp: "Setz das Adjektiv zwischen Begleiter und Nomen und pass es an:<br>der Schirm / neu → der <b>neue</b> Schirm<br>" +
+              "Wenn es mehrere sind: die Schuhe / nass → die <b>nassen</b> Schuhe" },
+      { id: "steigern",  tier: "📈", name: "Adjektive steigern", farbe: "#8338ec", schreibbar: true,
+        tipp: "schnell – schnell<b>er</b> – am schnell<b>sten</b><br>Manchmal wird a zu ä, o zu ö, u zu ü: alt – <b>ä</b>lter – am <b>ä</b>ltesten<br>" +
+              "Ganz besonders: gut – besser – am besten · viel – mehr – am meisten · hoch – höher – am höchsten" },
+      { id: "raetsel",   tier: "🦉", name: "Rätsel: Was bin ich?", farbe: "#d63384", schreibbar: true,
+        tipp: "Die Adjektive verraten dir, wie das Ding ist. Lies sie genau!<br>Die Lösung ist ein Nomen – Nomen schreibt man gross." }
+    ];
+    function fallVon(id) { return FAELLE.filter(function (f) { return f.id === id; })[0]; }
+
+    const AUFGABEN = [];
+
+    // 1) Welche Wortart hat das markierte Wort?
+    SATZ_WOERTER.forEach(function (woerter, si) {
+      woerter.forEach(function (wort, wi) {
+        if (!wort.t) return;
+        AUFGABEN.push({ id: "so-" + si + "-" + wi, fall: "sortieren", frage: function () {
+          const html = woerter.map(function (x, i) {
+            return (i === wi ? '<span class="markiert">' + x.w + '</span>' : x.w) + x.p;
+          }).join(" ");
+          return {
+            html: '<div class="a-frage">Welche Wortart ist das markierte Wort?</div><div class="a-gross">' + html + '</div>',
+            optionen: ["N", "V", "A"], wortart: true, richtig: wort.t,
+            loesung: "«" + wort.w + "» ist ein " + WORTART[wort.t].name + " " + WORTART[wort.t].punkt,
+            erklaerung: PROBE[wort.t]
+          };
+        }});
+      });
+    });
+
+    // 2) Alle Nomen / Verben / Adjektive im Satz antippen
+    SATZ_WOERTER.forEach(function (woerter, si) {
+      ["N", "V", "A"].forEach(function (t) {
+        if (!woerter.some(function (x) { return x.t === t; })) return;
+        AUFGABEN.push({ id: "de-" + si + "-" + t, fall: "detektiv", frage: function () {
+          return { detektiv: true, woerter: woerter, ziel: t };
+        }});
+      });
+    });
+
+    // 3) der, die oder das?
+    NOMEN.forEach(function (n) {
+      const art = n.split(" ")[0], wort = n.split(" ")[1];
+      AUFGABEN.push({ id: "ar-" + wort, fall: "artikel", frage: function () {
+        return {
+          html: '<div class="a-frage">Welcher Begleiter passt?</div><div class="a-gross"><span class="luecke">&nbsp;</span> ' + wort + '</div>',
+          optionen: ["der", "die", "das"], festeReihenfolge: true, richtig: art,
+          loesung: art + " " + wort, erklaerung: "Sprich es laut: «" + art + " " + wort + "»."
+        };
+      }});
+    });
+
+    // 4) Verben anpassen
+    VERBEN.forEach(function (zeile) {
+      const grund = zeile.split(":")[0];
+      const formen = zeile.split(":")[1].trim().split(" ");
+      PERSONEN.forEach(function (person, pi) {
+        AUFGABEN.push({ id: "ve-" + grund + "-" + pi, fall: "verben", frage: function () {
+          const form = formen[pi];
+          const wer = pi === 0 ? "Ich" : gross(person);
+          return {
+            html: '<div class="a-frage">Wie heisst das Verb richtig?</div>' +
+                  '<div class="a-gross">' + wer + ' <span class="luecke">&nbsp;</span></div>' +
+                  '<div class="a-klein">(' + grund + ')</div>',
+            optionen: optionenAus(form, formen.concat([grund]), 3), richtig: form,
+            loesung: wer + " " + form,
+            schreib: { antworten: [form] },
+            erklaerung: "ich " + formen[0] + " · du " + formen[1] + " · er " + formen[2] + " · wir " + formen[3] + " · ihr " + formen[4] + " · sie " + formen[5]
+          };
+        }});
+      });
+    });
+
+    // 5) Adjektive anpassen
+    ANPASSEN.forEach(function (zeile) {
+      const teile = zeile.split("|");
+      const art = teile[0].split(" ")[0], nomen = teile[0].split(" ")[1], adj = teile[1], form = teile[2];
+      const mehrzahl = /en$/.test(form);
+      AUFGABEN.push({ id: "an-" + nomen + "-" + adj, fall: "anpassen", frage: function () {
+        // Mal wie im Heft Aufgabe 1, mal wie Aufgabe 4
+        const alsSatz = Math.random() < 0.5;
+        const oben = alsSatz
+          ? gross(art) + " " + nomen + " " + (mehrzahl ? "sind" : "ist") + " " + adj + "."
+          : art + " " + nomen + " / " + adj;
+        const kandidaten = [adj, adj + "e", adj + "en", adj + "er", adj + "es"].map(function (f) { return art + " " + f + " " + nomen; });
+        return {
+          html: '<div class="a-frage">Setz das Adjektiv zwischen Begleiter und Nomen:</div>' +
+                '<div class="a-gross">' + oben + '</div>' +
+                '<div class="a-klein">' + art + ' <span class="luecke">&nbsp;</span> ' + nomen + '</div>',
+          optionen: optionenAus(art + " " + form + " " + nomen, kandidaten, 3), richtig: art + " " + form + " " + nomen,
+          loesung: art + " " + form + " " + nomen,
+          schreib: { antworten: [form], text: "Schreib nur das Adjektiv: " + art + " ___ " + nomen },
+          erklaerung: mehrzahl ? "Wenn es mehrere sind, hängt man -en an." : "Das Adjektiv bekommt meistens ein -e."
+        };
+      }});
+    });
+
+    // 6) Adjektive steigern
+    STEIGERN.forEach(function (zeile) {
+      const t = zeile.split("|");
+      const grund = t[0], komp = t[1], sup = t[2].split(",");
+      // a) die 1. Steigerungsform fehlt
+      AUFGABEN.push({ id: "st-" + grund + "-1", fall: "steigern", frage: function () {
+        const kand = [grund + "er", mitUmlaut(grund) + "er", ohneUmlaut(komp), grund + "e", komp + "er", "mehr " + grund];
+        return {
+          html: '<div class="a-frage">Wie heisst die 1. Steigerungsform?</div>' +
+                '<div class="a-gross">' + grund + ' – <span class="luecke">&nbsp;</span> – am ' + sup[0] + '</div>',
+          optionen: optionenAus(komp, kand, 3), richtig: komp,
+          loesung: grund + " – " + komp + " – am " + sup[0],
+          schreib: { antworten: [komp] },
+          erklaerung: komp.indexOf(grund) === 0 ? "Man hängt -er an." : "Achtung, dieses Adjektiv ändert sich!"
+        };
+      }});
+      // b) die 2. Steigerungsform fehlt
+      AUFGABEN.push({ id: "st-" + grund + "-2", fall: "steigern", frage: function () {
+        const kand = ["am " + grund + "sten", "am " + grund + "esten", "am " + mitUmlaut(grund) + "sten", "am " + ohneUmlaut(sup[0]),
+                      "am " + komp + "sten", "am " + grund + "ste"]
+          .filter(function (k) { return sup.indexOf(k.slice(3)) < 0; });
+        return {
+          html: '<div class="a-frage">Wie heisst die 2. Steigerungsform?</div>' +
+                '<div class="a-gross">' + grund + ' – ' + komp + ' – am <span class="luecke">&nbsp;</span></div>',
+          optionen: optionenAus("am " + sup[0], kand, 3), richtig: "am " + sup[0],
+          loesung: grund + " – " + komp + " – am " + sup[0],
+          schreib: { antworten: sup, text: "Schreib das Wort nach «am»." },
+          erklaerung: sup.length > 1 ? "Beides ist richtig: am " + sup.join(" / am ") + "." : ""
+        };
+      }});
+    });
+
+    // 7) Rätsel und "Welches Adjektiv passt?"
+    const RAETSEL_LOESUNGEN = RAETSEL.map(function (r) { return r.split("|")[1]; });
+    RAETSEL.forEach(function (zeile) {
+      const text = zeile.split("|")[0], loesung = zeile.split("|")[1];
+      AUFGABEN.push({ id: "ra-" + loesung, fall: "raetsel", frage: function () {
+        return {
+          html: '<div class="a-frage">Was bin ich?</div><div class="a-gross">' + text + '</div>',
+          optionen: optionenAus(loesung, RAETSEL_LOESUNGEN, 4), richtig: loesung,
+          loesung: loesung,
+          schreib: { antworten: [loesung], nomen: true },
+          erklaerung: ""
+        };
+      }});
+    });
+    Object.keys(PASST).forEach(function (wofuer) {
+      PASST[wofuer].forEach(function (adj) {
+        AUFGABEN.push({ id: "pa-" + adj, fall: "raetsel", frage: function () {
+          const andere = [];
+          Object.keys(PASST).forEach(function (w) { if (w !== wofuer) PASST[w].forEach(function (a) { andere.push(a); }); });
+          return {
+            html: '<div class="a-frage">Welches Adjektiv passt zu …</div><div class="a-gross">' + wofuer + '?</div>',
+            optionen: optionenAus(adj, andere, 3), richtig: adj,
+            loesung: wofuer + " → " + adj, erklaerung: ""
+          };
+        }});
+      });
+    });
+
+    function aufgabenVon(fallId) {
+      return AUFGABEN.filter(function (a) { return !fallId || a.fall === fallId; });
+    }
+
+
+    // ================= SPEICHERN & LADEN =================
+    // Alles wird im Browser gespeichert (localStorage) und zusätzlich online (siehe unten).
+
+    let daten = laden();
+    let einst = { schreiben: false };
+    try { const e = localStorage.getItem(EINST_NAME); if (e) einst = Object.assign(einst, JSON.parse(e)); } catch (f) {}
+    function einstSpeichern() { try { localStorage.setItem(EINST_NAME, JSON.stringify(einst)); } catch (f) {} }
+
+    function laden() {
+      try {
+        const text = localStorage.getItem(SPEICHER_NAME);
+        if (text) return JSON.parse(text);
+      } catch (fehler) {}
+      return { karten: {} };
+    }
+
+    function speichern() {
+      try { localStorage.setItem(SPEICHER_NAME, JSON.stringify(daten)); } catch (fehler) {}
+      cloudSpaeterSenden();
+    }
+
+    function info(id) {
+      if (!daten.karten[id]) daten.karten[id] = { gewusst: 0, nicht: 0, serie: 0, zeit: 0 };
+      return daten.karten[id];
+    }
+
+    function status(a) {
+      if (a.serie >= GEKONNT_AB) return "kann";
+      if (a.gewusst === 0 && a.nicht === 0) return "neu";
+      if (a.serie === 0) return "schwer";
+      return "ueben";
+    }
+
+    function gekonntIn(fallId) {
+      return aufgabenVon(fallId).filter(function (a) { return status(info(a.id)) === "kann"; }).length;
+    }
+
+    // Aufgaben, die er noch nicht kann, kommen öfter dran (wie in der Einmaleins-App).
+    function gewicht(a) {
+      if (a.serie >= GEKONNT_AB) return 1;
+      if (a.gewusst === 0 && a.nicht === 0) return 5;
+      return 6 + Math.min(a.nicht, 5) * 2 - a.serie * 2;
+    }
+
+
+    // ================= STARTSEITE =================
+
+    function zeigeStart() {
+      document.getElementById("spiel").style.display = "none";
+      document.getElementById("start").style.display = "block";
+      aktuelle = null;
+
+      const karten = document.getElementById("karten");
+      karten.innerHTML = "";
+      FAELLE.forEach(function (f) {
+        const gesamt = aufgabenVon(f.id).length, gekonnt = gekonntIn(f.id);
+        const text = gekonnt === gesamt ? "🏆 Gelöst!" : gekonnt + " von " + gesamt + " ⭐";
+        karten.appendChild(macheKarte(f.tier, f.name, f.farbe, Math.round(gekonnt / gesamt * 100), text, f.id));
+      });
+      const gesamt = AUFGABEN.length, gekonnt = gekonntIn(null);
+      const karte = macheKarte("🎲", "Alle Fälle gemischt", "#ff7b00", Math.round(gekonnt / gesamt * 100),
+                               gekonnt + " von " + gesamt + " ⭐", null);
+      karte.classList.add("gemischt");
+      karten.appendChild(karte);
+
+      document.getElementById("farben").innerHTML = ["N", "V", "A"].map(function (t) {
+        return '<span style="background:' + WORTART[t].farbe + '">' + MEHRZAHL[t] + '</span>';
+      }).join("");
+
+      albumAnzeigen();
+    }
+
+    function macheKarte(tier, name, farbe, prozent, text, fallId) {
+      const karte = document.createElement("button");
+      karte.className = "karte";
+      karte.style.background = farbe;
+      karte.innerHTML =
+        '<span class="tier">' + tier + '</span>' +
+        '<span class="name">' + name + '</span>' +
+        '<div class="balken"><div style="width:' + prozent + '%"></div></div>' +
+        '<span class="stand">' + text + '</span>';
+      karte.onclick = function () { starteRunde(fallId); };
+      return karte;
+    }
+
+
+    // ================= EINE RUNDE =================
+
+    let fallId = null;       // welcher Fall gerade gespielt wird (null = alle gemischt)
+    let liste = [];          // Aufgaben, die noch drankommen: [{aufgabe, nochmal}]
+    let aktuelle = null;     // {aufgabe, nochmal, f: Inhalt der Frage}
+    let beantwortet = false;
+    let durchgang = null;
+    let nummer = 0;          // zählt die Aufgaben, damit späte Antworten nicht stören
+
+    function starteRunde(id) {
+      fallId = id;
+      document.getElementById("start").style.display = "none";
+      document.getElementById("spiel").style.display = "block";
+      document.getElementById("ergebnis").style.display = "none";
+      document.getElementById("aufgabeBereich").hidden = false;
+      document.getElementById("tipp").hidden = true;
+      const f = id ? fallVon(id) : null;
+      document.getElementById("titel").textContent = f ? f.tier + " " + f.name : "🎲 Alle Fälle gemischt";
+      artenZeigen();
+
+      // Aufgaben ziehen – schwierige haben mehr "Lose", keine doppelt
+      const kandidaten = aufgabenVon(id).map(function (a) { return { a: a, g: gewicht(info(a.id)) }; });
+      liste = [];
+      while (liste.length < AUFGABEN_PRO_RUNDE && kandidaten.length) {
+        let summe = 0;
+        kandidaten.forEach(function (k) { summe += k.g; });
+        let los = Math.random() * summe, i = 0;
+        for (; i < kandidaten.length; i++) { los -= kandidaten[i].g; if (los < 0) break; }
+        i = Math.min(i, kandidaten.length - 1);
+        liste.push({ aufgabe: kandidaten[i].a, nochmal: false });
+        kandidaten.splice(i, 1);
+      }
+      durchgang = { sofort: 0, gesamt: liste.length, erledigt: 0 };
+      naechsteAufgabe();
+    }
+
+    // Knöpfe "Antippen / Schreiben" – nur wo Schreiben möglich ist
+    function artenZeigen() {
+      const arten = document.getElementById("arten");
+      const geht = fallId === null || fallVon(fallId).schreibbar;
+      arten.innerHTML = "";
+      arten.hidden = !geht;
+      if (!geht) return;
+      [[false, "👆 Antippen"], [true, "✏️ Mit dem Stift schreiben"]].forEach(function (x) {
+        const k = document.createElement("button");
+        k.className = "art" + (einst.schreiben === x[0] ? " aktiv" : "");
+        k.textContent = x[1];
+        k.onclick = function () {
+          einst.schreiben = x[0]; einstSpeichern(); artenZeigen();
+          if (aktuelle && !beantwortet) zeigeAufgabe();     // gleiche Aufgabe, andere Art
+        };
+        arten.appendChild(k);
+      });
+    }
+
+    function naechsteAufgabe() {
+      if (!liste.length) { rundeFertig(); return; }
+      aktuelle = liste.shift();
+      aktuelle.f = aktuelle.aufgabe.frage();
+      zeigeAufgabe();
+    }
+
+    function zeigeAufgabe() {
+      nummer++;
+      beantwortet = false;
+      const f = aktuelle.f;
+      const fall = fallVon(aktuelle.aufgabe.fall);
+      if (fallId === null) document.getElementById("titel").textContent = fall.tier + " " + fall.name;
+      document.getElementById("tipp").innerHTML = fall.tipp;
+      document.getElementById("zaehler").textContent =
+        "Aufgabe " + Math.min(durchgang.erledigt + 1, durchgang.gesamt) + " von " + durchgang.gesamt;
+      document.getElementById("rueckmeldung").innerHTML = aktuelle.nochmal ? '<div class="hinweis">🔁 Die nochmals!</div>' : "";
+      document.getElementById("nachher").hidden = true;
+      document.getElementById("schreiben").hidden = true;
+      const optionen = document.getElementById("optionen");
+      optionen.innerHTML = "";
+      bisStickerZeigen();
+
+      if (f.detektiv) { zeigeDetektiv(f); return; }
+
+      document.getElementById("aufgabe").innerHTML = f.html;
+      const schreibenAn = einst.schreiben && f.schreib && fall.schreibbar;
+      if (schreibenAn) {
+        document.getElementById("schreiben").hidden = false;
+        document.getElementById("schreibKnoepfe").hidden = false;
+        document.getElementById("schreibHinweis").textContent = f.schreib.text || "";
+        leinwandVorbereiten();
+        const weissNicht = document.createElement("button");
+        weissNicht.className = "knopf";
+        weissNicht.textContent = "🤷 Weiss ich nicht";
+        weissNicht.style.gridColumn = "1 / -1";
+        weissNicht.onclick = function () {
+          if (beantwortet) return;
+          document.getElementById("schreibKnoepfe").hidden = true;
+          bewerten(false, "So heisst es:");
+        };
+        optionen.appendChild(weissNicht);
+        return;
+      }
+
+      f.optionen.forEach(function (o) {
+        const k = document.createElement("button");
+        k.className = "opt";
+        if (f.wortart) {
+          k.classList.add("wortart");
+          k.style.background = WORTART[o].farbe;
+          k.textContent = WORTART[o].name;
+        } else {
+          k.textContent = o;
+        }
+        k.onclick = function () {
+          if (beantwortet) return;
+          const ok = o === f.richtig;
+          k.classList.add(ok ? "richtig" : "falsch");
+          if (f.wortart) k.style.background = "";
+          if (!ok) {
+            optionen.querySelectorAll(".opt").forEach(function (b, i) {
+              if (f.optionen[i] === f.richtig) { b.classList.add("richtig"); b.style.background = ""; }
+            });
+          }
+          bewerten(ok);
+        };
+        optionen.appendChild(k);
+      });
+    }
+
+    // ---------- Wörter-Jagd im Satz ----------
+    function zeigeDetektiv(f) {
+      const ziel = WORTART[f.ziel];
+      const auswahl = {};
+      const box = document.getElementById("aufgabe");
+      box.innerHTML = '<div class="a-frage">Tippe alle <b style="background:' + ziel.farbe + ';padding:0 8px;border-radius:8px">' +
+                      MEHRZAHL[f.ziel] + '</b> an!</div><div class="satz" id="satz"></div>';
+      const satz = document.getElementById("satz");
+      f.woerter.forEach(function (x, i) {
+        const k = document.createElement("button");
+        k.className = "wort";
+        k.textContent = x.w;
+        k.onclick = function () {
+          if (beantwortet) return;
+          auswahl[i] = !auswahl[i];
+          k.classList.toggle("an", auswahl[i]);
+          k.style.background = auswahl[i] ? ziel.farbe : "";
+        };
+        satz.appendChild(k);
+        if (x.p) satz.appendChild(document.createTextNode(x.p));
+        satz.appendChild(document.createTextNode(" "));
+      });
+
+      const pruefen = document.createElement("button");
+      pruefen.className = "knopf gruen";
+      pruefen.textContent = "Prüfen 🔍";
+      pruefen.style.gridColumn = "1 / -1";
+      pruefen.onclick = function () {
+        if (beantwortet) return;
+        let ok = true, fehlen = 0, zuviel = 0;
+        satz.querySelectorAll(".wort").forEach(function (k, i) {
+          const soll = f.woerter[i].t === f.ziel, ist = !!auswahl[i];
+          if (soll && ist) { k.classList.add("stimmt"); }
+          else if (soll) { ok = false; fehlen++; k.classList.add("fehlt"); k.style.color = "#333"; k.style.boxShadow = "0 0 0 4px " + ziel.farbe + " inset"; }
+          else if (ist) { ok = false; zuviel++; k.style.background = ""; k.classList.add("falsch"); }
+        });
+        pruefen.remove();
+        let text = "";
+        if (fehlen) text += (fehlen === 1 ? "1 Wort hast du übersehen (umrandet). " : fehlen + " Wörter hast du übersehen (umrandet). ");
+        if (zuviel) text += (zuviel === 1 ? "1 Wort ist kein " : zuviel + " Wörter sind keine ") + (zuviel === 1 ? ziel.name : MEHRZAHL[f.ziel]) + " (durchgestrichen).";
+        f.loesung = "";
+        f.erklaerung = text + "<br>" + PROBE[f.ziel];
+        bewerten(ok);
+      };
+      document.getElementById("optionen").appendChild(pruefen);
+    }
+
+    // ---------- Richtig oder falsch? ----------
+    function bewerten(ok, falschTitel) {
+      if (beantwortet) return;
+      beantwortet = true;
+      const f = aktuelle.f;
+      const a = info(aktuelle.aufgabe.id);
+      a.zeit = Date.now();
+      const rueck = document.getElementById("rueckmeldung");
+      durchgang.erledigt++;
+
+      if (ok) {
+        a.gewusst++;
+        a.serie++;
+        if (!aktuelle.nochmal) durchgang.sofort++;
+        rueck.innerHTML = '<div class="rueck richtig"><div class="gross">' + zufall(LOB) + '</div>' +
+                          (f.loesung && einst.schreiben && f.schreib ? '<div class="loesung">' + f.loesung + '</div>' : "") + '</div>';
+        const sticker = albumRichtig();
+        speichern();
+        const n = nummer;
+        setTimeout(function () { if (n === nummer) naechsteAufgabe(); }, sticker ? 2600 : 1300);
+      } else {
+        a.nicht++;
+        a.serie = 0;
+        durchgang.erledigt--;                         // die Aufgabe kommt nochmals
+        liste.push({ aufgabe: aktuelle.aufgabe, nochmal: true });
+        rueck.innerHTML = '<div class="rueck falsch"><div class="gross">' + (falschTitel || "Nicht ganz 🙂") + '</div>' +
+                          (f.loesung ? '<div class="loesung">' + f.loesung + '</div>' : "") +
+                          (f.erklaerung ? '<div class="info">' + f.erklaerung + '</div>' : "") + '</div>';
+        speichern();
+        document.getElementById("nachher").hidden = false;
+      }
+      bisStickerZeigen();
+    }
+
+    // Wenn die Schrift-Erkennung sich geirrt hat, können die Eltern korrigieren
+    function dochRichtig() {
+      const a = info(aktuelle.aufgabe.id);
+      a.nicht = Math.max(0, a.nicht - 1);
+      liste.pop();                                     // nicht nochmals abfragen
+      beantwortet = false;
+      document.getElementById("nachher").hidden = true;
+      bewerten(true);
+    }
+
+    document.getElementById("weiter").onclick = naechsteAufgabe;
+
+    function rundeFertig() {
+      aktuelle = null;
+      document.getElementById("aufgabeBereich").hidden = true;
+      document.getElementById("zaehler").textContent = "";
+      const sofort = durchgang.sofort, gesamt = durchgang.gesamt;
+      let bild = "🎉", titel = "Fall gelöst!";
+      if (sofort === gesamt) { bild = "🏆"; titel = "Meisterdetektiv! Alles sofort gewusst!"; }
+      const erg = document.getElementById("ergebnis");
+      erg.innerHTML =
+        '<div class="e-bild">' + bild + '</div>' +
+        '<div class="e-titel">' + titel + '</div>' +
+        '<div class="e-text">⭐ ' + sofort + ' von ' + gesamt + ' Aufgaben sofort gewusst' +
+        (sofort < gesamt ? '<br>Die anderen hast du nochmals geübt 💪' : '') + '</div>' +
+        '<button class="gross-knopf" id="nochmalRunde">Nochmal ▶</button>' +
+        '<button class="gross-knopf weiss" id="fertigRunde">Fertig</button>';
+      erg.style.display = "block";
+      document.getElementById("nochmalRunde").onclick = function () { starteRunde(fallId); };
+      document.getElementById("fertigRunde").onclick = zeigeStart;
+    }
+
+
+    // ================= SCHREIBEN (mit dem Stift) =================
+    // Gleich wie in der Englisch-App. Die Hand auf dem Bildschirm wird ignoriert,
+    // sobald mit dem Apple Pencil geschrieben wurde.
+    const leinwand = document.getElementById("leinwand");
+    const stift = leinwand.getContext("2d");
+    let striche = [], strich = null, startZeit = 0, stiftBenutzt = false;
+
+    function leinwandVorbereiten() {
+      const r = leinwand.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      leinwand.width = Math.round(r.width * dpr); leinwand.height = Math.round(r.height * dpr);
+      stift.setTransform(dpr, 0, 0, dpr, 0, 0);
+      striche = []; strich = null;
+      zeichneAlles();
+    }
+    function zeichneAlles() {
+      const r = leinwand.getBoundingClientRect();
+      stift.clearRect(0, 0, r.width, r.height);
+      stift.lineCap = "round"; stift.lineJoin = "round"; stift.lineWidth = 7; stift.strokeStyle = "#1d3557";
+      striche.forEach(function (s) {
+        stift.beginPath();
+        s[0].forEach(function (x, i) { if (i) stift.lineTo(x, s[1][i]); else stift.moveTo(x, s[1][i]); });
+        if (s[0].length === 1) stift.lineTo(s[0][0] + 0.1, s[1][0]);
+        stift.stroke();
+      });
+      document.getElementById("leerHinweis").hidden = striche.length > 0;
+    }
+    function punktVon(ev) { const r = leinwand.getBoundingClientRect(); return [ev.clientX - r.left, ev.clientY - r.top]; }
+
+    leinwand.addEventListener("pointerdown", function (ev) {
+      if (beantwortet) return;
+      if (ev.pointerType === "pen") stiftBenutzt = true;
+      if (ev.pointerType === "touch" && stiftBenutzt) return;   // Hand auf dem Bildschirm ignorieren
+      ev.preventDefault();
+      leinwand.setPointerCapture(ev.pointerId);
+      if (!striche.length) startZeit = Date.now();
+      const p = punktVon(ev);
+      strich = [[p[0]], [p[1]], [Date.now() - startZeit]];
+      striche.push(strich);
+      zeichneAlles();
+    });
+    leinwand.addEventListener("pointermove", function (ev) {
+      if (!strich) return;
+      ev.preventDefault();
+      const ereignisse = ev.getCoalescedEvents ? ev.getCoalescedEvents() : [ev];
+      (ereignisse.length ? ereignisse : [ev]).forEach(function (e) {
+        const p = punktVon(e);
+        strich[0].push(p[0]); strich[1].push(p[1]); strich[2].push(Date.now() - startZeit);
+      });
+      zeichneAlles();
+    });
+    function strichEnde() { strich = null; }
+    leinwand.addEventListener("pointerup", strichEnde);
+    leinwand.addEventListener("pointercancel", strichEnde);
+    window.addEventListener("resize", function () { if (!document.getElementById("schreiben").hidden) zeichneAlles(); });
+
+    document.getElementById("rueckgaengig").onclick = function () { if (!beantwortet) { striche.pop(); zeichneAlles(); } };
+    document.getElementById("loeschen").onclick = function () { if (!beantwortet) { striche = []; zeichneAlles(); } };
+
+    // Die Handschrift lesen lassen. Die Erkennung liefert bis zu 10 Vorschläge;
+    // passt einer davon, ist die Antwort richtig. So klappt es auch mit krakeliger Schrift.
+    async function schriftLesen() {
+      const r = leinwand.getBoundingClientRect();
+      const anfrage = {
+        options: "enable_pre_space",
+        requests: [{ writing_guide: { writing_area_width: Math.round(r.width), writing_area_height: Math.round(r.height) },
+                     ink: striche.map(function (s) { return [s[0].map(Math.round), s[1].map(Math.round), s[2]]; }), language: "de" }]
+      };
+      const abbruch = new AbortController();
+      const timer = setTimeout(function () { abbruch.abort(); }, 9000);
+      try {
+        const antwort = await fetch("https://inputtools.google.com/request?itc=de-t-i0-handwrit&app=demopage", {
+          method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(anfrage), signal: abbruch.signal
+        });
+        const json = await antwort.json();
+        if (json[0] !== "SUCCESS") return null;
+        return json[1][0][1] || [];
+      } catch (f) { return null; } finally { clearTimeout(timer); }
+    }
+
+    // In der Schweiz gibt es kein ß – die Erkennung liefert es manchmal trotzdem
+    function schriftNorm(s, grossKlein) {
+      const t = s.replace(/ß/g, "ss").replace(/[.,!?…:;"«»]/g, " ").replace(/\s+/g, "").trim();
+      return grossKlein ? t : t.toLowerCase();
+    }
+    function schriftPasst(antworten, vorschlaege, grossKlein) {
+      const ziele = antworten.map(function (z) { return schriftNorm(z, grossKlein); });
+      return vorschlaege.some(function (v) { return ziele.indexOf(schriftNorm(v, grossKlein)) >= 0; });
+    }
+
+    document.getElementById("schreibFertig").onclick = async function () {
+      if (beantwortet || !aktuelle) return;
+      const f = aktuelle.f;
+      const hinweis = document.getElementById("schreibHinweis");
+      if (!striche.length) { hinweis.textContent = "✏️ Schreib zuerst die Antwort mit dem Stift."; return; }
+      hinweis.textContent = "🔍 Ich lese …";
+      const n = nummer;
+      const vorschlaege = await schriftLesen();
+      if (n !== nummer) return;
+      hinweis.textContent = "";
+      document.getElementById("schreibKnoepfe").hidden = true;
+
+      if (vorschlaege === null) {   // keine Verbindung: selbst vergleichen
+        document.getElementById("rueckmeldung").innerHTML =
+          '<div class="rueck falsch"><div class="info">Ich konnte die Schrift gerade nicht lesen (kein Internet?). Vergleiche selbst:</div>' +
+          '<div class="loesung">' + f.schreib.antworten[0] + '</div><div class="knopfreihe">' +
+          '<button class="knopf gruen" id="schriftOk">Richtig geschrieben ✓</button>' +
+          '<button class="knopf rot" id="schriftFalsch">Noch nicht ✗</button></div></div>';
+        document.getElementById("schriftOk").onclick = function () { bewerten(true); };
+        document.getElementById("schriftFalsch").onclick = function () { bewerten(false); };
+        return;
+      }
+      // Nomen müssen gross geschrieben sein, alle anderen Wörter dürfen auch gross erkannt werden
+      const nomen = !!f.schreib.nomen;
+      if (schriftPasst(f.schreib.antworten, vorschlaege, nomen)) {
+        bewerten(true);
+      } else {
+        const nurGross = nomen && schriftPasst(f.schreib.antworten, vorschlaege, false);
+        bewerten(false, nurGross ? "Fast! Nomen schreibt man gross ✍️" : "Nicht ganz 🙂");
+        const rueck = document.querySelector("#rueckmeldung .rueck");
+        rueck.insertAdjacentHTML("afterbegin",
+          '<div class="info">Ich habe gelesen: «' + esc(vorschlaege[0] || "?") + '»</div>');
+        rueck.insertAdjacentHTML("beforeend",
+          '<button class="doch" id="dochKnopf">Eltern: Das war doch richtig geschrieben</button>');
+        document.getElementById("dochKnopf").onclick = dochRichtig;
+      }
+    };
+
+
+    // ================= KNÖPFE =================
+
+    document.getElementById("zurueck").onclick = function () { nummer++; zeigeStart(); };
+    document.getElementById("tippKnopf").onclick = function () {
+      const t = document.getElementById("tipp");
+      t.hidden = !t.hidden;
+    };
+
+    document.getElementById("zuruecksetzen").onclick = function () {
+      if (confirm("Wirklich den ganzen Fortschritt löschen? (Die Sticker im Album bleiben.)")) {
+        daten = { karten: {} };
+        speichern();
+        zeigeStart();
+      }
+    };
+
+    function bisStickerZeigen() {
+      const noch = STICKER_ALLE - albumLaden().zaehler;
+      document.getElementById("bisSticker").textContent =
+        "Noch " + noch + " richtige bis zum nächsten Sticker 🎁";
+    }
+
+
+    // ================= BEGRÜSSUNG & FOTO =================
+    // Das Foto wird nur auf diesem Gerät gespeichert – es kommt nicht auf GitHub.
+    // Es ist dasselbe Foto wie in den anderen Apps.
+
+    const NAME = "Rémi";
+    const FOTO_SPEICHER = "einmaleins-foto";
+
+    document.getElementById("name").textContent = NAME;
+
+    function fotoAnzeigen() {
+      let bild = null;
+      try { bild = localStorage.getItem(FOTO_SPEICHER); } catch (fehler) {}
+      if (bild) {
+        const img = document.getElementById("foto");
+        img.src = bild;
+        img.style.display = "block";
+        document.getElementById("fotoHinweis").style.display = "none";
+      }
+    }
+
+    document.getElementById("fotoWahl").onchange = function () {
+      const datei = this.files[0];
+      if (!datei) return;
+      const leser = new FileReader();
+      leser.onload = function () {
+        const original = new Image();
+        original.onload = function () {
+          const groesse = 300;
+          const seite = Math.min(original.width, original.height);
+          const lw = document.createElement("canvas");
+          lw.width = groesse;
+          lw.height = groesse;
+          lw.getContext("2d").drawImage(
+            original,
+            (original.width - seite) / 2, (original.height - seite) / 2, seite, seite,
+            0, 0, groesse, groesse
+          );
+          try { localStorage.setItem(FOTO_SPEICHER, lw.toDataURL("image/jpeg", 0.85)); } catch (fehler) {}
+          fotoAnzeigen();
+        };
+        original.src = leser.result;
+      };
+      leser.readAsDataURL(datei);
+    };
+
+
+    // ================= SAMMELALBUM =================
+    // Alle 15 richtigen Antworten gibt es einen Sticker fürs Album – wie in den anderen Apps.
+    // Diese App hat ihr EIGENES Album.
+    const ALBUM_SPEICHER = "deutsch-detektiv-album";
+    const STICKER_ALLE = 15;         // alle 15 richtigen Antworten ein Sticker
+    const GOLD_CHANCE = 0.1;         // ab und zu ist ein Sticker golden (1 von 10)
+
+    const STICKER_SEITEN = [
+      { titel: "🌲 Im Wald", sticker: [["🦊","Fuchs"],["🦔","Igel"],["🦉","Eule"],["🐿️","Eichhörnchen"],["🦌","Hirsch"],
+                                       ["🐻","Bär"],["🐺","Wolf"],["🦡","Dachs"],["🦫","Biber"],["🍄","Pilz"]] },
+      { titel: "🌊 Im Meer", sticker: [["🐬","Delfin"],["🦈","Hai"],["🐙","Krake"],["🐠","Fisch"],["🐢","Schildkröte"],
+                                       ["🦀","Krebs"],["🐳","Wal"],["🦭","Robbe"],["🐡","Kugelfisch"],["🦑","Tintenfisch"]] },
+      { titel: "🦖 Dinos & Drachen", sticker: [["🦖","T-Rex"],["🦕","Langhals"],["🐉","Drache"],["🐲","Drachenkopf"],["🦎","Echse"],
+                                       ["🐊","Krokodil"],["🥚","Drachenei"],["🌋","Vulkan"],["🦴","Knochen"],["🪨","Fels"]] },
+      { titel: "🌍 Wilde Tiere", sticker: [["🦁","Löwe"],["🐘","Elefant"],["🦒","Giraffe"],["🦓","Zebra"],["🐒","Affe"],
+                                       ["🦜","Papagei"],["🐼","Panda"],["🦘","Känguru"],["🐧","Pinguin"],["🦩","Flamingo"]] },
+      { titel: "🚀 Im Weltall", sticker: [["🚀","Rakete"],["🛸","Ufo"],["🌍","Erde"],["🌙","Mond"],["⭐","Stern"],
+                                       ["☄️","Komet"],["🪐","Saturn"],["👽","Alien"],["🛰️","Satellit"],["🌌","Milchstrasse"]] },
+      { titel: "⚽ Sport", sticker: [["⚽","Fussball"],["🏀","Basketball"],["🎾","Tennis"],["🏒","Eishockey"],["⛷️","Skifahrer"],
+                                       ["🚴","Velo"],["🛹","Skateboard"],["🏆","Pokal"],["🥇","Goldmedaille"],["🎯","Volltreffer"]] },
+      { titel: "🚂 Fahrzeuge", sticker: [["🚂","Lokomotive"],["🚁","Helikopter"],["🏎️","Rennauto"],["🚒","Feuerwehr"],["🚜","Traktor"],
+                                       ["✈️","Flugzeug"],["⛵","Segelboot"],["🚠","Gondel"],["🏍️","Motorrad"],["🚓","Polizei"]] }
+    ];
+    const ALLE_STICKER = [];
+    STICKER_SEITEN.forEach(function (s) { s.sticker.forEach(function (x) { ALLE_STICKER.push({ emoji: x[0], name: x[1] }); }); });
+
+    function albumLaden() {
+      let a = null;
+      try { const t = localStorage.getItem(ALBUM_SPEICHER); if (t) a = JSON.parse(t); } catch (f) {}
+      return Object.assign({ zaehler: 0, sticker: {}, serie: 0, letzterTag: "", umgetauscht: {} }, a || {});
+    }
+    function albumSpeichern(a) {
+      try { localStorage.setItem(ALBUM_SPEICHER, JSON.stringify(a)); } catch (f) {}
+      cloudSpaeterSenden();
+    }
+
+    function tagText(d) { return d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate(); }
+    function gesternText() { const d = new Date(); d.setDate(d.getDate() - 1); return tagText(d); }
+    function anzahlSticker(a) { return ALLE_STICKER.filter(function (s) { return a.sticker[s.emoji]; }).length; }
+
+    // Einen Sticker ziehen: zuerst nur solche, die noch fehlen.
+    // Ist das Album voll, werden die Sticker nach und nach golden.
+    function stickerZiehen(a) {
+      const fehlen = ALLE_STICKER.filter(function (s) { return !a.sticker[s.emoji]; });
+      const nichtGold = ALLE_STICKER.filter(function (s) { return a.sticker[s.emoji] && !a.sticker[s.emoji].gold; });
+      let s, gold;
+      if (fehlen.length) { s = zufall(fehlen); gold = Math.random() < GOLD_CHANCE; }
+      else if (nichtGold.length) { s = zufall(nichtGold); gold = true; }
+      else { return null; }
+      a.sticker[s.emoji] = { gold: gold, zeit: Date.now() };
+      return { emoji: s.emoji, name: s.name, gold: gold };
+    }
+
+    // Wird bei jeder richtigen Antwort aufgerufen.
+    // Gibt true zurück, wenn es gerade einen Sticker gab (dann etwas länger warten).
+    function albumRichtig() {
+      const a = albumLaden();
+      const heute = tagText(new Date());
+      if (a.letzterTag !== heute) {
+        a.serie = a.letzterTag === gesternText() ? a.serie + 1 : 1;
+        a.letzterTag = heute;
+      }
+      a.zaehler++;
+      let neu = null;
+      if (a.zaehler >= STICKER_ALLE) {
+        a.zaehler = 0;
+        neu = stickerZiehen(a);
+        if (!neu) neu = { emoji: "🏆", name: "Album komplett!", gold: true, fertig: true };
+      }
+      albumSpeichern(a);
+      albumAnzeigen(a);
+      if (neu) stickerFeiern(neu, a);
+      return !!neu;
+    }
+
+    function albumAnzeigen(a) {
+      a = a || albumLaden();
+      document.getElementById("albumZahl").textContent = anzahlSticker(a);
+      let punkte = "";
+      for (let i = 0; i < STICKER_ALLE; i++) punkte += '<i class="' + (i < a.zaehler ? "voll" : "") + '"></i>';
+      document.getElementById("albumPunkte").innerHTML = punkte;
+      const serie = (a.letzterTag === tagText(new Date()) || a.letzterTag === gesternText()) ? a.serie : 0;
+      const feld = document.getElementById("serie");
+      feld.hidden = serie < 2;
+      feld.textContent = "🔥 " + serie + " Tage hintereinander geübt!";
+    }
+
+    function stickerFeiern(s, a) {
+      const box = document.getElementById("stickerPlus");
+      box.className = s.gold ? "gold" : "";
+      box.innerHTML =
+        '<div class="s-titel">' + (s.fertig ? "Alles gesammelt!" : s.gold ? "✨ Goldener Sticker! ✨" : "🎁 Neuer Sticker!") + '</div>' +
+        '<div class="s-bild">' + s.emoji + '</div>' +
+        '<div class="s-name">' + s.name + '</div>' +
+        '<div class="s-info">📒 ' + anzahlSticker(a) + ' von ' + ALLE_STICKER.length + '</div>';
+      void box.offsetWidth;
+      box.classList.add("zeigen");
+      const knopf = document.getElementById("albumKnopf");
+      setTimeout(function () {
+        knopf.classList.remove("landet"); void knopf.offsetWidth; knopf.classList.add("landet");
+      }, 2300);
+    }
+
+    function albumOeffnen() {
+      const a = albumLaden();
+      let html = '<h3>📒 Mein Sammelalbum</h3><div class="a-stand">' + anzahlSticker(a) + ' von ' + ALLE_STICKER.length +
+                 ' Stickern · alle ' + STICKER_ALLE + ' richtigen Antworten gibt es einen neuen</div>';
+      STICKER_SEITEN.forEach(function (seite) {
+        html += '<div class="a-seite">' + seite.titel + '</div><div class="a-raster">';
+        seite.sticker.forEach(function (x) {
+          const hat = a.sticker[x[0]];
+          html += '<div class="a-sticker ' + (hat ? (hat.gold ? "hat gold" : "hat") : "fehlt") + '"><b>' + x[0] + '</b>' + (hat ? x[1] : "?") + '</div>';
+        });
+        html += '</div>';
+      });
+      html += '<button class="a-zu" id="albumZu">Fertig</button>';
+      const d = document.getElementById("album");
+      d.innerHTML = html;
+      document.getElementById("albumZu").onclick = function () { d.close(); };
+      d.showModal();
+      d.scrollTop = 0;
+      if (document.activeElement) document.activeElement.blur();
+    }
+
+    document.getElementById("albumKnopf").onclick = albumOeffnen;
+
+
+    // ================= ONLINE-SPEICHER (Firebase) =================
+    // Gleich wie in der Reihen-App: Rémis Stand wird zusätzlich online gespeichert,
+    // damit er auf jedem Gerät gleich ist. Ohne Internet funktioniert die App normal weiter.
+    // (Das Foto bleibt nur auf dem Gerät.)
+    const FIREBASE = {
+      projectId: "",      // ← hier kommt die Projekt-ID hin (gleich wie in der Reihen-App)
+      apiKey: ""          // ← hier kommt der Web-API-Schlüssel hin
+    };
+    const CLOUD_DOKUMENT = "lernapps/remi-deutsch";
+
+    let cloudTimer = null;
+    let cloudBereit = false;
+
+    function cloudAdresse() {
+      return "https://firestore.googleapis.com/v1/projects/" + FIREBASE.projectId +
+             "/databases/(default)/documents/" + CLOUD_DOKUMENT + "?key=" + FIREBASE.apiKey;
+    }
+    function cloudStatus(text) {
+      const el = document.getElementById("cloudStatus");
+      if (el) el.textContent = text;
+    }
+
+    function zusammenfuehren(lokal, online) {
+      const d = { karten: {} };
+      const kl = lokal.karten || {}, ko = online.karten || {};
+      const alle = {};
+      Object.keys(kl).forEach(function (k) { alle[k] = 1; });
+      Object.keys(ko).forEach(function (k) { alle[k] = 1; });
+      Object.keys(alle).forEach(function (k) {
+        const a = kl[k], b = ko[k];
+        d.karten[k] = !a ? b : !b ? a : ((b.zeit || 0) > (a.zeit || 0) ? b : a);
+      });
+      return d;
+    }
+
+    function albumZusammenfuehren(lokal, online) {
+      const neuer = (online.letzterTag && (online.zeit || 0) > (lokal.zeit || 0)) ? online : lokal;
+      const a = Object.assign({}, neuer, { sticker: {} });
+      [lokal.sticker || {}, online.sticker || {}].forEach(function (l) {
+        for (const e in l) {
+          const alt = a.sticker[e];
+          a.sticker[e] = { gold: !!(l[e].gold || (alt && alt.gold)), zeit: l[e].zeit || 0 };
+        }
+      });
+      return a;
+    }
+
+    async function cloudHolen() {
+      if (!FIREBASE.projectId || !FIREBASE.apiKey) { cloudStatus(""); return; }
+      cloudStatus("☁️ verbinde …");
+      try {
+        const antwort = await fetch(cloudAdresse());
+        if (antwort.status === 404) { cloudBereit = true; cloudSenden(); return; }
+        if (!antwort.ok) throw new Error(antwort.status);
+        const doc = await antwort.json();
+        const online = JSON.parse(doc.fields.stand.stringValue);
+        daten = zusammenfuehren(daten, online.daten || {});
+        const album = albumZusammenfuehren(albumLaden(), online.album || {});
+        try {
+          localStorage.setItem(SPEICHER_NAME, JSON.stringify(daten));
+          localStorage.setItem(ALBUM_SPEICHER, JSON.stringify(album));
+        } catch (f) {}
+        cloudBereit = true;
+        if (document.getElementById("start").style.display !== "none") zeigeStart(); else albumAnzeigen();
+        cloudSenden();
+      } catch (fehler) {
+        cloudStatus("📴 offline – wird später gespeichert");
+      }
+    }
+
+    function cloudSpaeterSenden() {
+      if (!FIREBASE.projectId || !cloudBereit) return;
+      clearTimeout(cloudTimer);
+      cloudTimer = setTimeout(cloudSenden, 1500);
+    }
+
+    async function cloudSenden() {
+      if (!FIREBASE.projectId || !cloudBereit) return;
+      const album = albumLaden();
+      album.zeit = Date.now();
+      try { localStorage.setItem(ALBUM_SPEICHER, JSON.stringify(album)); } catch (f) {}
+      const stand = JSON.stringify({ daten: daten, album: album, geaendert: Date.now() });
+      try {
+        const antwort = await fetch(cloudAdresse(), {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ fields: { stand: { stringValue: stand } } })
+        });
+        if (!antwort.ok) throw new Error(antwort.status);
+        cloudStatus("☁️ online gespeichert");
+      } catch (fehler) {
+        cloudStatus("📴 offline – wird später gespeichert");
+      }
+    }
+
+    document.addEventListener("visibilitychange", function () { if (!document.hidden) { albumAnzeigen(); cloudHolen(); } });
+    window.addEventListener("online", cloudHolen);
+
+    try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (f) {}
+
+    fotoAnzeigen();
+    zeigeStart();
+    cloudHolen();
+  </script>
+
+</body>
+</html>
