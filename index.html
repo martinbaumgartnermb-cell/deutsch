@@ -158,6 +158,16 @@
     .luecke   { display: inline-block; min-width: 110px; border-bottom: 4px solid #e85d04; margin: 0 6px; }
     .markiert { background: #f1f1f1; border-radius: 10px; padding: 0 8px; box-shadow: 0 0 0 3px #888 inset; text-decoration: underline; }
 
+    /* Steigern im Satz: Lücken mit dem Stift füllen */
+    .l-satz { font-size: 32px; font-weight: bold; line-height: 1.7; }
+    .l-text { font-size: 27px; line-height: 2; text-align: left; }
+    .l-satz .luecke, .l-text .luecke { height: 1.05em; vertical-align: -0.2em; margin: 0 4px 0 6px; }
+    .l-text .luecke { min-width: 90px; }
+    .luecke.jetzt { background: #fff3b0; border-radius: 8px 8px 0 0; box-shadow: 0 0 0 3px #ffe066; }
+    .grundform { font-size: 0.68em; color: #888; font-weight: normal; }
+    .l-ok   { white-space: nowrap; color: #04a57b; font-weight: bold; background: #e3fff5; border-radius: 8px; padding: 0 6px; }
+    .l-korr { white-space: nowrap; color: #c1121f; font-weight: bold; background: #ffe5e7; border-radius: 8px; padding: 0 6px; }
+
     /* Wörter zum Antippen (Detektiv) */
     .satz { font-size: 32px; line-height: 1.9; }
     .wort {
@@ -502,7 +512,56 @@
       "leicht|leichter|leichtesten", "schlecht|schlechter|schlechtesten", "heiss|heisser|heissesten",
       "mild|milder|mildesten", "breit|breiter|breitesten", "frisch|frischer|frischesten", "laut|lauter|lautesten",
       "lustig|lustiger|lustigsten", "teuer|teurer|teuersten", "dunkel|dunkler|dunkelsten", "schwer|schwerer|schwersten",
-      "klug|klüger|klügsten", "kurz|kürzer|kürzesten"
+      "klug|klüger|klügsten", "kurz|kürzer|kürzesten", "langsam|langsamer|langsamsten", "gern|lieber|liebsten",
+      "weit|weiter|weitesten", "süss|süsser|süssesten", "stolz|stolzer|stolzesten", "steil|steiler|steilsten"
+    ];
+
+    // Steigern im Satz: In der Lücke steht die Grundform.
+    // {gross+} = 1. Steigerung (im Satz steht «als»), {gross++} = 2. Steigerung (Rémi schreibt «am …sten» selbst).
+    // Die Formen kommen aus der Liste STEIGERN oben – neue Adjektive zuerst dort eintragen.
+    const LUECKEN_SAETZE = [
+      "Der Elefant ist {gross+} als die Maus.",
+      "Ein Velo ist {langsam+} als ein Auto.",
+      "Im Winter ist es {kalt+} als im Sommer.",
+      "Mein Bruder ist zwei Jahre {alt+} als ich.",
+      "Der Berg ist {hoch+} als der Hügel.",
+      "Lisa singt {laut+} als Nora.",
+      "Ich esse Glace {gern+} als Spinat.",
+      "Papa kocht {gut+} als ich.",
+      "Mein Bleistift ist {kurz+} als dein Bleistift.",
+      "Ein Stein ist {schwer+} als eine Feder.",
+      "Die Sonne ist {hell+} als der Mond.",
+      "Im Sommer sind die Tage {lang+} als im Winter.",
+      "Rémi rennt {schnell+} als sein Freund.",
+      "Der Tee ist {heiss+} als die Milch.",
+      "Ein Bus hat {viel+} Plätze als ein Auto.",
+      "Der Fuchs ist {klug+} als die Gans.",
+      "Ein Kissen ist {weich+} als ein Stuhl.",
+      "Der Gepard rennt von allen Tieren {schnell++}.",
+      "Von allen Kindern in der Klasse ist Tim {gross++}.",
+      "Von allen Jahreszeiten ist es im Winter {kalt++}.",
+      "In unserer Familie ist Opa {alt++}.",
+      "Von allem esse ich Glace {gern++}.",
+      "Von allen Bergen der Welt ist der Mount Everest {hoch++}.",
+      "Von allen Kindern malt Nora {schön++}.",
+      "Von allen Früchten schmeckt mir die Erdbeere {gut++}.",
+      "Von allen Tieren im Garten ist die Schnecke {langsam++}.",
+      "Von allen Tieren ist der Blauwal {schwer++}.",
+      "Im ganzen Jahr sind die Tage im Juni {lang++}.",
+      "Wer hat in der Klasse {viel++} Sticker gesammelt?",
+      "Von allen Spielsachen ist der Teddy {weich++}."
+    ];
+
+    // Kurze Lückentexte: Rémi füllt eine Lücke nach der anderen.
+    const LUECKEN_TEXTE = [
+      "Rémi besucht den Zoo. Die Giraffe ist {gross+} als das Zebra. Der Elefant ist von allen Tieren {schwer++}. Doch der Affe klettert von allen {schnell++}.",
+      "Lisa und Nora machen ein Wettrennen. Lisa rennt {schnell+} als Nora. Aber Nora springt {weit+} als Lisa. Ihr Hund Bello rennt von allen {schnell++}.",
+      "Im Herbst sind die Tage {kurz+} als im Sommer. Der Wind bläst {stark+} als im Frühling. Im Januar ist es von allen Monaten {kalt++}.",
+      "Rémi backt mit Papa einen Kuchen. Der Schokoladenkuchen ist {süss+} als der Apfelkuchen. Rémi isst Kuchen {gern+} als Gemüse. Den Teig mag er von allem {gern++}.",
+      "Auf dem Pausenplatz bauen die Kinder Türme. Tims Turm ist {hoch+} als Lisas Turm. Rémis Turm ist von allen {hoch++}. Darum ist Rémi {stolz+} als die anderen.",
+      "Papa ist {gross+} als Mama. Opa ist {alt+} als Papa. Das Baby ist in der Familie {klein++}. Und es schreit von allen {laut++}!",
+      "Die Klasse macht einen Veloausflug. Der erste Hügel ist {steil+} als der zweite. Der Lehrer fährt {langsam+} als die Kinder. Von allen fährt Nora {weit++}.",
+      "Am Montag ist es warm. Am Dienstag ist es {warm+} als am Montag. Am Mittwoch scheint die Sonne {hell+} als am Dienstag. In der ganzen Woche ist es am Sonntag {warm++}."
     ];
 
     // Rätsel: Was bin ich?
@@ -616,6 +675,11 @@
       { id: "steigern",  tier: "📈", name: "Adjektive steigern", farbe: "#8338ec", schreibbar: true,
         tipp: "schnell – schnell<b>er</b> – am schnell<b>sten</b><br>Manchmal wird a zu ä, o zu ö, u zu ü: alt – <b>ä</b>lter – am <b>ä</b>ltesten<br>" +
               "Ganz besonders: gut – besser – am besten · viel – mehr – am meisten · hoch – höher – am höchsten" },
+      { id: "steigsatz", tier: "📝", name: "Steigern im Satz", farbe: "#5a189a", nurSchreiben: true,
+        tipp: "Schreib das Adjektiv aus der Klammer in der richtigen Form mit dem Stift.<br>" +
+              "Steht <b>als</b> im Satz? Dann vergleichst du zwei: Der Hund rennt schnell<b>er</b> als die Katze.<br>" +
+              "Vergleichst du mit <b>allen</b>? Dann schreibst du <b>am …sten</b>: Der Gepard rennt von allen am schnell<b>sten</b>.<br>" +
+              "Ganz besonders: gut – besser – am besten · viel – mehr – am meisten · gern – lieber – am liebsten" },
       { id: "raetsel",   tier: "🦉", name: "Rätsel: Was bin ich?", farbe: "#d63384", schreibbar: true,
         tipp: "Die Adjektive verraten dir, wie das Ding ist. Lies sie genau!<br>Die Lösung ist ein Nomen – Nomen schreibt man gross." },
       { id: "text",      tier: "🖍️", name: "Text anmalen", farbe: "#8d5a2b",
@@ -747,6 +811,49 @@
       }});
     });
 
+    // 6b) Steigern im Satz: Lücken mit dem Stift füllen
+    const STEIG_FORMEN = {};
+    STEIGERN.forEach(function (zeile) {
+      const t = zeile.split("|");
+      STEIG_FORMEN[t[0]] = { komp: t[1], sup: t[2].split(",") };
+    });
+    // "Der Elefant ist {gross+} als …" → Textstücke und Lücken
+    function lueckenVon(vorlage) {
+      const teile = [], luecken = [];
+      let rest = vorlage, m;
+      const muster = /\{([^}+]+)(\+\+?)\}/;
+      while ((m = rest.match(muster))) {
+        teile.push(rest.slice(0, m.index));
+        const grund = m[1], stufe = m[2].length, formen = STEIG_FORMEN[grund];
+        if (!formen) { console.warn("Fehlt in STEIGERN:", grund); }
+        const komp = formen ? formen.komp : grund + "er";
+        const sup = formen ? formen.sup : [grund + "sten"];
+        luecken.push({
+          grund: grund, stufe: stufe,
+          antworten: stufe === 1 ? [komp] : sup.map(function (s) { return "am " + s; }),
+          ohneAm: sup, komp: komp,
+          erklaerung: grund + " – " + komp + " – am " + sup[0]
+        });
+        rest = rest.slice(m.index + m[0].length);
+      }
+      teile.push(rest);
+      return { teile: teile, luecken: luecken };
+    }
+    function steigAufgabe(id, vorlage, alsText) {
+      AUFGABEN.push({ id: id, fall: "steigsatz", frage: function () {
+        const z = lueckenVon(vorlage);
+        z.luecken.forEach(function (l) { l.ok = null; });
+        const loesung = z.teile.map(function (t, i) {
+          return t + (i < z.luecken.length ? "<u>" + z.luecken[i].antworten[0] + "</u>" : "");
+        }).join("");
+        return { luecken: z.luecken, teile: z.teile, alsText: alsText, pos: 0, fehler: 0,
+                 loesung: alsText ? "" : loesung,
+                 erklaerung: alsText ? "Schau dir die rot markierten Lücken nochmals an." : z.luecken[0].erklaerung };
+      }});
+    }
+    LUECKEN_SAETZE.forEach(function (s, i) { steigAufgabe("ss-" + i, s, false); });
+    LUECKEN_TEXTE.forEach(function (s, i) { steigAufgabe("lt-" + i, s, true); });
+
     // 7) Rätsel und "Welches Adjektiv passt?"
     const RAETSEL_LOESUNGEN = RAETSEL.map(function (r) { return r.split("|")[1]; });
     RAETSEL.forEach(function (zeile) {
@@ -783,7 +890,7 @@
 
     // Die Schreib-Werkstatt nimmt alle Aufgaben, bei denen man selbst schreiben kann
     AUFGABEN.forEach(function (a) {
-      a.schreibt = ["verben", "anpassen", "steigern"].indexOf(a.fall) >= 0 || a.id.indexOf("ra-") === 0;
+      a.schreibt = ["verben", "anpassen", "steigern", "steigsatz"].indexOf(a.fall) >= 0 || a.id.indexOf("ra-") === 0;
     });
 
     function aufgabenVon(fallId) {
@@ -958,6 +1065,7 @@
 
       if (f.detektiv) { zeigeDetektiv(f); return; }
       if (f.text) { zeigeText(f); return; }
+      if (f.luecken) { zeigeLuecken(f); return; }
 
       document.getElementById("aufgabe").innerHTML = f.html;
       const schreibenAn = (fallId === "werkstatt" || einst.schreiben) && f.schreib && fall.schreibbar;
@@ -1180,6 +1288,125 @@
     }
 
     // ---------- Richtig oder falsch? ----------
+    // ---------- Steigern im Satz (Lücken mit dem Stift füllen) ----------
+    function lueckenZeichnen(f) {
+      let html = "";
+      f.teile.forEach(function (t, i) {
+        html += esc(t);
+        if (i >= f.luecken.length) return;
+        const l = f.luecken[i];
+        if (i < f.pos) {
+          html += '<span class="' + (l.ok ? "l-ok" : "l-korr") + '">' + l.antworten[0] + (l.ok ? " ✓" : "") + '</span>';
+        } else {
+          html += '<span class="luecke' + (i === f.pos ? " jetzt" : "") + '">&nbsp;</span>' +
+                  '<span class="grundform">(' + l.grund + ')</span>';
+        }
+      });
+      const fertig = f.pos >= f.luecken.length;
+      const frage = fertig ? "" : f.alsText
+        ? "Lücke " + (f.pos + 1) + " von " + f.luecken.length + ": Schreib die richtige Form mit dem Stift."
+        : "Schreib die richtige Form mit dem Stift:";
+      document.getElementById("aufgabe").innerHTML =
+        (frage ? '<div class="a-frage">' + frage + '</div>' : "") +
+        '<div class="' + (f.alsText ? "l-text" : "l-satz") + '">' + html + '</div>';
+    }
+
+    function zeigeLuecken(f) {
+      lueckenZeichnen(f);
+      document.getElementById("schreiben").hidden = false;
+      document.getElementById("schreibKnoepfe").hidden = false;
+      document.getElementById("schreibHinweis").textContent = "";
+      leinwandVorbereiten();
+      const optionen = document.getElementById("optionen");
+      optionen.innerHTML = "";
+      const weissNicht = document.createElement("button");
+      weissNicht.className = "knopf";
+      weissNicht.textContent = "🤷 Weiss ich nicht";
+      weissNicht.style.gridColumn = "1 / -1";
+      weissNicht.onclick = function () {
+        if (beantwortet || f.pos >= f.luecken.length) return;
+        document.getElementById("schreibKnoepfe").hidden = true;
+        lueckeErgebnis(f, false, "So heisst es:", null);
+      };
+      optionen.appendChild(weissNicht);
+    }
+
+    // Die Handschrift für die aktuelle Lücke prüfen
+    function lueckeAuswerten(f, vorschlaege) {
+      const l = f.luecken[f.pos];
+      if (vorschlaege === null) {   // keine Verbindung: selbst vergleichen
+        document.getElementById("rueckmeldung").innerHTML =
+          '<div class="rueck falsch"><div class="info">Ich konnte die Schrift gerade nicht lesen (kein Internet?). Vergleiche selbst:</div>' +
+          '<div class="loesung">' + l.antworten[0] + '</div><div class="knopfreihe">' +
+          '<button class="knopf gruen" id="schriftOk">Richtig geschrieben ✓</button>' +
+          '<button class="knopf rot" id="schriftFalsch">Noch nicht ✗</button></div></div>';
+        document.getElementById("schriftOk").onclick = function () { lueckeErgebnis(f, true); };
+        document.getElementById("schriftFalsch").onclick = function () { lueckeErgebnis(f, false, null, null); };
+        return;
+      }
+      if (schriftPasst(l.antworten, vorschlaege, false)) { lueckeErgebnis(f, true); return; }
+      let titel = "Nicht ganz 🙂";
+      if (l.stufe === 2 && schriftPasst(l.ohneAm, vorschlaege, false)) titel = "Fast! Vergiss das «am» nicht ✍️";
+      else if (l.stufe === 2 && schriftPasst([l.komp], vorschlaege, false)) titel = "Hier vergleichst du mit allen – du brauchst «am …sten» 🙂";
+      else if (l.stufe === 1 && schriftPasst(l.ohneAm.concat(l.ohneAm.map(function (s) { return "am " + s; })), vorschlaege, false))
+        titel = "Im Satz steht «als» – du brauchst die 1. Steigerung 🙂";
+      lueckeErgebnis(f, false, titel, vorschlaege[0] || "?");
+    }
+
+    // Eine Lücke ist erledigt: richtig oder falsch. Danach nächste Lücke oder Aufgabe fertig.
+    function lueckeErgebnis(f, ok, titel, gelesen) {
+      const l = f.luecken[f.pos];
+      l.ok = ok;
+      if (!ok) f.fehler++;
+      f.pos++;
+      lueckenZeichnen(f);
+      const rueck = document.getElementById("rueckmeldung");
+      const letzte = f.pos >= f.luecken.length;
+
+      // Wenn die Schrift-Erkennung sich geirrt hat, können die Eltern korrigieren
+      function dochKnopf(danach) {
+        if (!gelesen) return;
+        const box = rueck.querySelector(".rueck");
+        box.insertAdjacentHTML("afterbegin", '<div class="info">Ich habe gelesen: «' + esc(gelesen) + '»</div>');
+        box.insertAdjacentHTML("beforeend", '<button class="doch" id="dochKnopf">Eltern: Das war doch richtig geschrieben</button>');
+        document.getElementById("dochKnopf").onclick = function () {
+          l.ok = true; f.fehler--;
+          lueckenZeichnen(f);
+          danach();
+        };
+      }
+
+      if (letzte) {
+        document.getElementById("schreibKnoepfe").hidden = true;
+        document.getElementById("optionen").innerHTML = "";
+        if (!f.fehler) { rueck.innerHTML = ""; bewerten(true); return; }
+        bewerten(false, titel || "Nicht ganz 🙂");
+        if (!ok && f.fehler === 1) dochKnopf(dochRichtig);
+        return;
+      }
+
+      // Es gibt noch Lücken im Text
+      function weiter() {
+        rueck.innerHTML = '<div class="hinweis">✓ Weiter mit der nächsten Lücke</div>';
+        document.getElementById("nachher").hidden = true;
+        document.getElementById("schreibKnoepfe").hidden = false;
+        document.getElementById("schreibHinweis").textContent = "";
+        leinwandVorbereiten();
+      }
+      if (ok) {
+        weiter();
+        rueck.innerHTML = '<div class="hinweis">' + zufall(LOB) + ' Weiter mit der nächsten Lücke.</div>';
+        return;
+      }
+      document.getElementById("schreibKnoepfe").hidden = true;
+      rueck.innerHTML = '<div class="rueck falsch"><div class="gross">' + (titel || "Nicht ganz 🙂") + '</div>' +
+                        '<div class="loesung">' + l.antworten[0] + '</div>' +
+                        '<div class="info">' + l.erklaerung + '</div>' +
+                        '<div class="knopfreihe"><button class="knopf gruen" id="lueckeWeiter">Weiter ➜</button></div></div>';
+      document.getElementById("lueckeWeiter").onclick = weiter;
+      dochKnopf(weiter);
+    }
+
     function bewerten(ok, falschTitel) {
       if (beantwortet) return;
       beantwortet = true;
@@ -1347,6 +1574,8 @@
       if (n !== nummer) return;
       hinweis.textContent = "";
       document.getElementById("schreibKnoepfe").hidden = true;
+
+      if (f.luecken) { lueckeAuswerten(f, vorschlaege); return; }
 
       if (vorschlaege === null) {   // keine Verbindung: selbst vergleichen
         document.getElementById("rueckmeldung").innerHTML =
