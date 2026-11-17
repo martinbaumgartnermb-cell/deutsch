@@ -301,6 +301,19 @@
     #album .a-sticker.fehlt b { filter: grayscale(1) brightness(1.6); opacity: .25; }
     #album .a-zu { margin-top: 16px; font-size: 22px; font-weight: bold; border: none; border-radius: 18px; padding: 12px 34px;
                    background: #06d6a0; color: white; box-shadow: 0 5px 0 #04a57b; font-family: inherit; }
+
+    /* ---------- Uhr lesen lernen ---------- */
+    .abschnitt { font-size: 26px; color: #e85d04; margin: 34px 0 6px; }
+    .abschnitt-text { font-size: 17px; color: #777; margin: 0 0 14px; }
+    .uhr-gross { width: 260px; max-width: 70vw; height: auto; display: block; margin: 0 auto; }
+    .uhr-stellen { width: 300px; max-width: 78vw; touch-action: none; -webkit-touch-callout: none; cursor: grab; }
+    .uhr-klein { width: 150px; max-width: 34vw; height: auto; display: block; margin: 6px auto 0; }
+    .optionen.zwei { grid-template-columns: 1fr 1fr; }
+    .opt.uhr-opt { padding: 8px; }
+    .opt.uhr-opt svg { width: 100%; max-width: 150px; height: auto; display: block; margin: 0 auto; }
+    .tageszeit { font-size: 26px; font-weight: bold; }
+    .zeit-wort { font-size: 34px; font-weight: bold; color: #e85d04; line-height: 1.3; }
+    .stell-anzeige { font-size: 18px; color: #999; }
   </style>
 </head>
 <body>
@@ -330,6 +343,11 @@
     <p class="frage">Welchen Fall willst du heute lösen, Detektiv?</p>
     <div class="raster" id="karten"></div>
     <div class="farben" id="farben"></div>
+
+    <!-- Die kleine Uhr-App -->
+    <h2 class="abschnitt">🕐 Uhr lesen lernen</h2>
+    <p class="abschnitt-text">Der kurze Zeiger zeigt die Stunden, der lange die Minuten.</p>
+    <div class="raster" id="uhrKarten"></div>
     <button class="zuruecksetzen" id="zuruecksetzen">Fortschritt zurücksetzen</button>
     <div id="cloudStatus" style="font-size:13px; color:#999; margin-top:8px;"></div>
   </div>
@@ -688,7 +706,32 @@
               "Falsch angemalt? Nimm den 🧽 Radierer oder male mit der richtigen Farbe darüber.<br>" +
               PROBE.N + "<br>" + PROBE.V + "<br>" + PROBE.A },
       { id: "werkstatt", tier: "✏️", name: "Schreib-Werkstatt", farbe: "#1d3557",
-        tipp: "Hier schreibst du jede Antwort selbst mit dem Stift. Schreib schön deutlich, dann kann ich es lesen!" }
+        tipp: "Hier schreibst du jede Antwort selbst mit dem Stift. Schreib schön deutlich, dann kann ich es lesen!" },
+
+      // ---------- Uhr lesen lernen (eigene Abteilung auf der Startseite) ----------
+      { id: "uhr1", uhr: true, tier: "🕐", name: "Volle Stunden", farbe: "#277da1",
+        tipp: "Der <b>lange</b> Zeiger zeigt genau auf die <b>12</b>.<br>Der <b>kurze</b> Zeiger zeigt die Stunde: Steht er auf der 3, ist es <b>drei Uhr</b>." },
+      { id: "uhr2", uhr: true, tier: "🕧", name: "Halbe Stunden", farbe: "#43aa8b",
+        tipp: "Bei <b>halb</b> zeigt der lange Zeiger auf die <b>6</b>.<br>Achtung: «halb vier» heisst, die halbe Stunde <b>bis vier Uhr</b> ist vorbei. " +
+              "Der kurze Zeiger steht dann <b>zwischen der 3 und der 4</b>. Digital: 3:30." },
+      { id: "uhr3", uhr: true, tier: "🕒", name: "Viertelstunden", farbe: "#f3722c",
+        tipp: "Langer Zeiger auf der <b>3</b> → <b>Viertel nach</b> (3:15 = Viertel nach drei).<br>" +
+              "Langer Zeiger auf der <b>9</b> → <b>Viertel vor</b> (3:45 = Viertel vor vier)." },
+      { id: "uhr4", uhr: true, tier: "⏱️", name: "Fünf-Minuten-Schritte", farbe: "#8338ec",
+        tipp: "Von einer Zahl zur nächsten sind es <b>5 Minuten</b>. Die kleinen grauen Zahlen aussen helfen dir.<br>" +
+              "1 → 5 nach · 2 → 10 nach · 4 → 20 nach · 5 → fünf vor halb · 7 → fünf nach halb · 8 → 20 vor · 10 → 10 vor · 11 → 5 vor" },
+      { id: "uhr5", uhr: true, tier: "🔢", name: "Digitaluhr", farbe: "#d63384",
+        tipp: "Bei der Digitaluhr steht <b>zuerst die Stunde</b>, dann die <b>Minuten</b>.<br>" +
+              "3:25 → 3 Uhr und 25 Minuten = fünf vor halb vier. 3:45 = Viertel vor vier." },
+      { id: "uhr6", uhr: true, tier: "🌙", name: "Morgen oder Abend?", farbe: "#1d3557",
+        tipp: "Der Tag hat <b>24 Stunden</b>. Die Uhr geht zweimal rundherum.<br>" +
+              "Am Nachmittag und am Abend zählst du <b>12 dazu</b>: 3 Uhr nachmittags = <b>15</b>:00 · 8 Uhr abends = <b>20</b>:00.<br>" +
+              "Am Morgen bleibt es gleich: 8 Uhr morgens = 8:00." },
+      { id: "uhr7", uhr: true, tier: "🖐️", name: "Uhr stellen", farbe: "#e63946",
+        tipp: "Zieh die Zeiger mit dem Finger oder dem Stift. Der <b>kurze</b> Zeiger wandert mit, wenn du den langen drehst – wie bei einer echten Uhr.<br>" +
+              "Du kannst auch einfach irgendwo auf die Uhr tippen: Der nächste Zeiger springt dorthin." },
+      { id: "uhrmix", uhr: true, mix: true, tier: "🎲", name: "Alle Uhr-Aufgaben gemischt", farbe: "#ff7b00",
+        tipp: "Der <b>kurze</b> Zeiger zeigt die Stunden, der <b>lange</b> die Minuten. Jede Zahl = 5 Minuten." }
     ];
     function fallVon(id) { return FAELLE.filter(function (f) { return f.id === id; })[0]; }
 
@@ -888,6 +931,182 @@
       AUFGABEN.push({ id: "tx-" + ti, fall: "text", frage: function () { return { text: true, woerter: woerter }; } });
     });
 
+    // ================= UHR LESEN LERNEN =================
+    // Eine kleine App in der App: Uhrzeiten an der analogen Uhr lesen und selbst stellen.
+    // Stunden werden intern 0–11 gespeichert (0 = zwölf), im 24-Stunden-Teil 0–23.
+
+    const ZAHLWORT = ["zwölf", "eins", "zwei", "drei", "vier", "fünf", "sechs", "sieben", "acht", "neun", "zehn", "elf"];
+    function stundeWort(h) { return ZAHLWORT[((h % 12) + 12) % 12]; }
+
+    // So sagt man die Uhrzeit (wie in der Schule in der Schweiz)
+    function zeitWorte(h, m) {
+      const jetzt = stundeWort(h), naechste = stundeWort(h + 1);
+      switch (m) {
+        case 0:  return (jetzt === "eins" ? "ein" : jetzt) + " Uhr";
+        case 5:  return "fünf nach " + jetzt;
+        case 10: return "zehn nach " + jetzt;
+        case 15: return "Viertel nach " + jetzt;
+        case 20: return "zwanzig nach " + jetzt;
+        case 25: return "fünf vor halb " + naechste;
+        case 30: return "halb " + naechste;
+        case 35: return "fünf nach halb " + naechste;
+        case 40: return "zwanzig vor " + naechste;
+        case 45: return "Viertel vor " + naechste;
+        case 50: return "zehn vor " + naechste;
+        case 55: return "fünf vor " + naechste;
+      }
+    }
+    function zweiStellen(n) { return (n < 10 ? "0" : "") + n; }
+    function digital(h, m) { return ((h % 12) || 12) + ":" + zweiStellen(m); }
+    function digital24(H, m) { return H + ":" + zweiStellen(m); }
+
+    // Zeichnet eine analoge Uhr als Bild (SVG)
+    function uhrSvg(h, m, opt) {
+      opt = opt || {};
+      let s = '<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" class="' + (opt.klasse || "") + '"' +
+              (opt.id ? ' id="' + opt.id + '"' : "") + '>';
+      s += '<circle cx="100" cy="100" r="80" fill="white" stroke="#ffd166" stroke-width="7"/>';
+      for (let i = 0; i < 60; i++) {
+        const lang = i % 5 === 0, w = i * 6 * Math.PI / 180;
+        const r1 = lang ? 68 : 72, r2 = 76;
+        s += '<line x1="' + (100 + r1 * Math.sin(w)).toFixed(1) + '" y1="' + (100 - r1 * Math.cos(w)).toFixed(1) +
+             '" x2="' + (100 + r2 * Math.sin(w)).toFixed(1) + '" y2="' + (100 - r2 * Math.cos(w)).toFixed(1) +
+             '" stroke="' + (lang ? "#555" : "#ccc") + '" stroke-width="' + (lang ? 2.5 : 1.2) + '"/>';
+      }
+      for (let z = 1; z <= 12; z++) {
+        const w = z * 30 * Math.PI / 180;
+        s += '<text x="' + (100 + 56 * Math.sin(w)).toFixed(1) + '" y="' + (100 - 56 * Math.cos(w) + 6).toFixed(1) +
+             '" text-anchor="middle" font-size="17" font-weight="bold" fill="#333" font-family="Trebuchet MS, Arial">' + z + '</text>';
+        if (opt.minuten) {
+          s += '<text x="' + (100 + 93 * Math.sin(w)).toFixed(1) + '" y="' + (100 - 93 * Math.cos(w) + 3.5).toFixed(1) +
+               '" text-anchor="middle" font-size="10" fill="#aaa" font-family="Trebuchet MS, Arial">' + zweiStellen((z * 5) % 60) + '</text>';
+        }
+      }
+      const sw = ((h % 12) * 30 + m * 0.5), mw = m * 6;
+      s += '<g' + (opt.id ? ' id="' + opt.id + '-h"' : "") + ' transform="rotate(' + sw + ' 100 100)">' +
+           '<line x1="100" y1="110" x2="100" y2="58" stroke="#1d3557" stroke-width="9" stroke-linecap="round"/></g>';
+      s += '<g' + (opt.id ? ' id="' + opt.id + '-m"' : "") + ' transform="rotate(' + mw + ' 100 100)">' +
+           '<line x1="100" y1="112" x2="100" y2="30" stroke="#e63946" stroke-width="5" stroke-linecap="round"/></g>';
+      s += '<circle cx="100" cy="100" r="6" fill="#333"/></svg>';
+      return s;
+    }
+
+    // Erklärung, wenn etwas falsch war
+    function uhrErklaerung(h, m) {
+      const zahl = m / 5;
+      let t;
+      if (m === 0) t = "Der lange Zeiger zeigt genau auf die 12 – also eine volle Stunde.";
+      else if (m === 30) t = "Der lange Zeiger zeigt auf die 6 → <b>halb</b>. Der kurze Zeiger steht zwischen der " +
+                             ((h % 12) || 12) + " und der " + (((h + 1) % 12) || 12) + ". Darum heisst es «halb " + stundeWort(h + 1) + "».";
+      else if (m === 15) t = "Der lange Zeiger zeigt auf die 3 → <b>Viertel nach</b>.";
+      else if (m === 45) t = "Der lange Zeiger zeigt auf die 9 → <b>Viertel vor</b>. Bald ist es " + stundeWort(h + 1) + " Uhr.";
+      else t = "Der lange Zeiger zeigt auf die " + zahl + ". Jede Zahl sind 5 Minuten: " + zahl + " × 5 = <b>" + m + " Minuten</b>.";
+      return t + "<br>Digital: <b>" + digital(h, m) + "</b>";
+    }
+
+    // Welche Minuten in welcher Stufe vorkommen
+    const UHR_MINUTEN = {
+      uhr1: [0], uhr2: [30], uhr3: [15, 45],
+      uhr4: [5, 10, 20, 25, 35, 40, 50, 55],
+      uhr5: [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55],
+      uhr7: [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55]
+    };
+    const MIT_MINUTENZAHLEN = { uhr4: true, uhr5: true, uhr6: true, uhr7: true };
+
+    // Falsche Antworten, die zu typischen Fehlern passen (z. B. «halb vier» mit 4:30 verwechseln)
+    function uhrFalsche(h, m, fall) {
+      const erlaubt = fall === "uhr1" ? [0] : fall === "uhr2" ? [0, 30] : fall === "uhr3" ? [0, 15, 30, 45] : UHR_MINUTEN.uhr5;
+      const schlau = [
+        [h + 1, m], [h - 1, m],                         // eine Stunde daneben
+        [h, (60 - m) % 60],                             // gespiegelt (Viertel nach ↔ Viertel vor)
+        [m / 5, (h % 12 || 12) * 5 % 60],               // Zeiger verwechselt
+        [h + 1, (60 - m) % 60], [h, (m + 30) % 60]
+      ];
+      const ziel = h % 12 + ":" + m, schon = {}, aus = [];
+      schon[ziel] = 1;
+      function dazu(x) {
+        const hh = ((Math.round(x[0]) % 12) + 12) % 12, mm = x[1];
+        const k = hh + ":" + mm;
+        if (schon[k] || erlaubt.indexOf(mm) < 0) return;
+        schon[k] = 1; aus.push([hh, mm]);
+      }
+      mischen(schlau).forEach(dazu);
+      while (aus.length < 6) dazu([Math.floor(Math.random() * 12), zufall(erlaubt)]);
+      return aus.slice(0, 3);
+    }
+
+    // Aufgaben für die Stufen 1–5: Uhr lesen (Uhr → Antwort) oder passende Uhr finden (Antwort → Uhr)
+    ["uhr1", "uhr2", "uhr3", "uhr4", "uhr5"].forEach(function (fall) {
+      UHR_MINUTEN[fall].forEach(function (m) {
+        for (let h = 0; h < 12; h++) {
+          AUFGABEN.push({ id: "uh-" + fall + "-" + h + "-" + m, fall: fall, uhr: true, frage: function () {
+            const dig = fall === "uhr5";
+            const text = function (x) { return dig ? digital(x[0], x[1]) : gross(zeitWorte(x[0], x[1])); };
+            const alle = mischen([[h, m]].concat(uhrFalsche(h, m, fall)));
+            const richtigText = gross(zeitWorte(h, m)) + " (" + digital(h, m) + ")";
+            const mz = !!MIT_MINUTENZAHLEN[fall];
+            if (Math.random() < 0.6) {
+              return {
+                html: '<div class="a-frage">Wie spät ist es?</div>' + uhrSvg(h, m, { klasse: "uhr-gross", minuten: mz }),
+                optionen: alle.map(text), richtig: text([h, m]),
+                loesung: richtigText, erklaerung: uhrErklaerung(h, m)
+              };
+            }
+            const key = function (x) { return x[0] + ":" + x[1]; };
+            return {
+              html: '<div class="a-frage">Welche Uhr zeigt …</div><div class="zeit-wort">' + text([h, m]) + '</div>',
+              optionen: alle.map(key), richtig: key([h, m]),
+              zeige: function (k) { const t = k.split(":"); return uhrSvg(+t[0], +t[1], { minuten: mz }); },
+              loesung: richtigText, erklaerung: uhrErklaerung(h, m)
+            };
+          } });
+        }
+      });
+    });
+
+    // Stufe 6: Morgen oder Abend? (24 Stunden)
+    function tageszeit(H) {
+      if (H < 12) return "🌅 Am Morgen";
+      if (H === 12) return "☀️ Am Mittag";
+      if (H < 18) return "☀️ Am Nachmittag";
+      if (H < 22) return "🌆 Am Abend";
+      return "🌙 In der Nacht";
+    }
+    for (let H = 6; H <= 23; H++) {
+      [0, 15, 30, 45].forEach(function (m) {
+        AUFGABEN.push({ id: "uh-uhr6-" + H + "-" + m, fall: "uhr6", uhr: true, frage: function () {
+          const anders = H >= 12 ? H - 12 : H + 12;
+          const kand = [[anders, m], [H + 1, m], [H - 1, m], [anders + 1, m], [H, (60 - m) % 60]];
+          const schon = {}, opt = [digital24(H, m)];
+          schon[opt[0]] = 1;
+          kand.forEach(function (x) {
+            const t = digital24(((x[0] % 24) + 24) % 24, x[1]);
+            if (!schon[t] && opt.length < 4) { schon[t] = 1; opt.push(t); }
+          });
+          return {
+            html: '<div class="tageszeit">' + tageszeit(H) + '</div>' + uhrSvg(H, m, { klasse: "uhr-gross", minuten: true }) +
+                  '<div class="a-frage">Wie spät ist es auf der Digitaluhr?</div>',
+            optionen: mischen(opt), richtig: digital24(H, m),
+            loesung: digital24(H, m),
+            erklaerung: H > 12 ? "Am Nachmittag und am Abend zählst du 12 dazu: " + (H - 12) + " + 12 = <b>" + H + "</b>."
+                               : H === 12 ? "Um 12 Uhr ist Mittag." : "Am Morgen bleibt die Stunde gleich: <b>" + H + "</b>."
+          };
+        } });
+      });
+    }
+
+    // Stufe 7: Die Uhr selbst stellen
+    UHR_MINUTEN.uhr7.forEach(function (m) {
+      for (let h = 0; h < 12; h++) {
+        AUFGABEN.push({ id: "uh-uhr7-" + h + "-" + m, fall: "uhr7", uhr: true, frage: function () {
+          const alsDigital = Math.random() < 0.3;
+          return { stellen: true, h: h, m: m,
+                   ziel: alsDigital ? digital(h, m) : gross(zeitWorte(h, m)),
+                   loesung: gross(zeitWorte(h, m)) + " (" + digital(h, m) + ")" };
+        } });
+      }
+    });
+
     // Die Schreib-Werkstatt nimmt alle Aufgaben, bei denen man selbst schreiben kann
     AUFGABEN.forEach(function (a) {
       a.schreibt = ["verben", "anpassen", "steigern", "steigsatz"].indexOf(a.fall) >= 0 || a.id.indexOf("ra-") === 0;
@@ -895,7 +1114,9 @@
 
     function aufgabenVon(fallId) {
       if (fallId === "werkstatt") return AUFGABEN.filter(function (a) { return a.schreibt; });
-      return AUFGABEN.filter(function (a) { return !fallId || a.fall === fallId; });
+      if (fallId === "uhrmix") return AUFGABEN.filter(function (a) { return a.uhr; });
+      if (!fallId) return AUFGABEN.filter(function (a) { return !a.uhr; });   // «Alle Fälle gemischt» = nur Deutsch
+      return AUFGABEN.filter(function (a) { return a.fall === fallId; });
     }
 
 
@@ -953,12 +1174,16 @@
 
       const karten = document.getElementById("karten");
       karten.innerHTML = "";
+      const uhrKarten = document.getElementById("uhrKarten");
+      uhrKarten.innerHTML = "";
       FAELLE.forEach(function (f) {
         const gesamt = aufgabenVon(f.id).length, gekonnt = gekonntIn(f.id);
         const text = gekonnt === gesamt ? "🏆 Gelöst!" : gekonnt + " von " + gesamt + " ⭐";
-        karten.appendChild(macheKarte(f.tier, f.name, f.farbe, Math.round(gekonnt / gesamt * 100), text, f.id));
+        const k = macheKarte(f.tier, f.name, f.farbe, Math.round(gekonnt / gesamt * 100), text, f.id);
+        if (f.mix) k.classList.add("gemischt");
+        (f.uhr ? uhrKarten : karten).appendChild(k);
       });
-      const gesamt = AUFGABEN.length, gekonnt = gekonntIn(null);
+      const gesamt = aufgabenVon(null).length, gekonnt = gekonntIn(null);
       const karte = macheKarte("🎲", "Alle Fälle gemischt", "#ff7b00", Math.round(gekonnt / gesamt * 100),
                                gekonnt + " von " + gesamt + " ⭐", null);
       karte.classList.add("gemischt");
@@ -1052,7 +1277,7 @@
       beantwortet = false;
       const f = aktuelle.f;
       const fall = fallVon(aktuelle.aufgabe.fall);
-      if (fallId === null) document.getElementById("titel").textContent = fall.tier + " " + fall.name;
+      if (fallId === null || fallId === "uhrmix") document.getElementById("titel").textContent = fall.tier + " " + fall.name;
       document.getElementById("tipp").innerHTML = fall.tipp;
       document.getElementById("zaehler").textContent =
         "Aufgabe " + Math.min(durchgang.erledigt + 1, durchgang.gesamt) + " von " + durchgang.gesamt;
@@ -1061,11 +1286,13 @@
       document.getElementById("schreiben").hidden = true;
       const optionen = document.getElementById("optionen");
       optionen.innerHTML = "";
+      optionen.classList.toggle("zwei", !!aktuelle.aufgabe.uhr);   // Uhr-Antworten 2 × 2
       bisStickerZeigen();
 
       if (f.detektiv) { zeigeDetektiv(f); return; }
       if (f.text) { zeigeText(f); return; }
       if (f.luecken) { zeigeLuecken(f); return; }
+      if (f.stellen) { zeigeStellen(f); return; }
 
       document.getElementById("aufgabe").innerHTML = f.html;
       const schreibenAn = (fallId === "werkstatt" || einst.schreiben) && f.schreib && fall.schreibbar;
@@ -1094,6 +1321,9 @@
           k.classList.add("wortart");
           k.style.background = WORTART[o].farbe;
           k.textContent = WORTART[o].name;
+        } else if (f.zeige) {
+          k.classList.add("uhr-opt");
+          k.innerHTML = f.zeige(o);
         } else {
           k.textContent = o;
         }
@@ -1111,6 +1341,66 @@
         };
         optionen.appendChild(k);
       });
+    }
+
+    // ---------- Uhr stellen: Zeiger mit Finger oder Stift ziehen ----------
+    function zeigeStellen(f) {
+      const box = document.getElementById("aufgabe");
+      let h = 0, m = 0, zeiger = null, gedreht = false;
+      box.innerHTML = '<div class="a-frage">Stelle die Uhr auf:</div><div class="zeit-wort">' + f.ziel + '</div>' +
+                      uhrSvg(h, m, { klasse: "uhr-gross uhr-stellen", minuten: true, id: "stellUhr" }) +
+                      '<div class="stell-anzeige">👆 Zieh die Zeiger</div>';
+      const uhr = document.getElementById("stellUhr");
+      stiftFlaeche(uhr);
+
+      function zeichnen() {
+        document.getElementById("stellUhr-h").setAttribute("transform", "rotate(" + (h * 30 + m * 0.5) + " 100 100)");
+        document.getElementById("stellUhr-m").setAttribute("transform", "rotate(" + (m * 6) + " 100 100)");
+      }
+      function winkelVon(ev) {
+        const r = uhr.getBoundingClientRect();
+        const dx = ev.clientX - (r.left + r.width / 2), dy = ev.clientY - (r.top + r.height / 2);
+        return (Math.atan2(dx, -dy) * 180 / Math.PI + 360) % 360;
+      }
+      function abstand(a, b) { const d = Math.abs(a - b) % 360; return d > 180 ? 360 - d : d; }
+      function bewegen(w) {
+        if (zeiger === "m") {
+          const neu = Math.round(w / 30) * 5 % 60;           // auf 5 Minuten einrasten
+          if (m >= 45 && neu < 15) h = (h + 1) % 12;          // über die 12 vorwärts → nächste Stunde
+          if (m < 15 && neu >= 45) h = (h + 11) % 12;         // rückwärts → Stunde davor
+          m = neu;
+        } else {
+          h = Math.round(((w - m * 0.5 + 360) % 360) / 30) % 12;
+        }
+        zeichnen();
+      }
+      uhr.addEventListener("pointerdown", function (ev) {
+        if (beantwortet) return;
+        const w = winkelVon(ev);
+        zeiger = abstand(w, h * 30 + m * 0.5) < abstand(w, m * 6) ? "h" : "m";
+        gedreht = true;
+        try { uhr.setPointerCapture(ev.pointerId); } catch (e) {}
+        bewegen(w);
+      });
+      uhr.addEventListener("pointermove", function (ev) { if (zeiger && !beantwortet) bewegen(winkelVon(ev)); });
+      ["pointerup", "pointercancel"].forEach(function (n) { uhr.addEventListener(n, function () { zeiger = null; }); });
+
+      const optionen = document.getElementById("optionen");
+      const fertig = document.createElement("button");
+      fertig.className = "knopf gruen";
+      fertig.textContent = "Fertig ✓";
+      fertig.style.gridColumn = "1 / -1";
+      fertig.onclick = function () {
+        if (beantwortet) return;
+        if (!gedreht) { document.getElementById("rueckmeldung").innerHTML = '<div class="hinweis">Dreh zuerst die Zeiger 🙂</div>'; return; }
+        const ok = h === f.h && m === f.m;
+        fertig.hidden = true;
+        f.erklaerung = ok ? "" : "So sieht es richtig aus:" + uhrSvg(f.h, f.m, { klasse: "uhr-klein", minuten: true }) +
+                       (h === (f.h + 1) % 12 && m === f.m ? "Fast! Der kurze Zeiger ist eine Stunde zu weit. " : "") +
+                       uhrErklaerung(f.h, f.m);
+        bewerten(ok, ok ? null : "Nicht ganz 🙂 So wäre es richtig:");
+      };
+      optionen.appendChild(fertig);
     }
 
     // ---------- Wörter-Jagd im Satz ----------
@@ -1460,7 +1750,9 @@
       document.getElementById("zaehler").textContent = "";
       const sofort = durchgang.sofort, gesamt = durchgang.gesamt;
       let bild = "🎉", titel = "Fall gelöst!";
-      if (sofort === gesamt) { bild = "🏆"; titel = "Meisterdetektiv! Alles sofort gewusst!"; }
+      const istUhr = fallId && fallVon(fallId).uhr;
+      if (istUhr) { bild = "⏰"; titel = "Super geübt!"; }
+      if (sofort === gesamt) { bild = "🏆"; titel = istUhr ? "Uhr-Profi! Alles sofort gewusst!" : "Meisterdetektiv! Alles sofort gewusst!"; }
       const erg = document.getElementById("ergebnis");
       erg.innerHTML =
         '<div class="e-bild">' + bild + '</div>' +
